@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>낭만시대 열전 — 패싸움 최종 프로토타입</title>
+<style>
+:root{--bg:#0c0f12;--panel:#181d22;--panel2:#101419;--line:#353b41;--ink:#eee4cc;--muted:#9da3a8;--gold:#c9a227;--red:#9a4b45;--green:#739078;--blue:#5a7c8d}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#090c0f,#17120f);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+.wrap{max-width:1200px;margin:auto;padding:16px}header{display:flex;justify-content:space-between;gap:10px;align-items:end;border-bottom:1px solid #5b5338;padding-bottom:10px}
+h1{margin:0;font-family:serif;font-size:28px}.small{font-size:11px;color:var(--muted)}
+button,select{background:#22261f;color:var(--ink);border:1px solid #5b5338;border-radius:7px;padding:8px 10px;font-weight:700}button{cursor:pointer}button.active{border-color:#e0bc4a}
+.toolbar,.rankbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.box{background:#181d22;border:1px solid var(--line);border-radius:10px;padding:11px}
+.stats{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:8px}.team{text-align:center}.team b{font-size:24px}
+.track{height:30px;background:#090c0f;border-radius:18px;position:relative}.track:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:#666}.marker{position:absolute;top:3px;width:24px;height:24px;border-radius:50%;background:#c9a227;transform:translateX(-50%);transition:left .4s}.state{text-align:center;font-weight:900;margin-top:5px}
+.grid{display:grid;grid-template-columns:1.25fr .75fr;gap:10px;margin-top:10px}.scope{border-left:3px solid var(--blue);background:#101419;border-radius:6px;padding:9px}
+.world{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.zone{background:#101419;border:1px solid #30363a;border-radius:8px;padding:8px}.zone.current{border-color:#d0ac40}.zbar{height:8px;background:#080a0c;border-radius:10px;overflow:hidden;margin:5px 0}.zbar i{display:block;height:100%;background:#8e7440}
+.event{background:#101419;border:1px solid #454c52;border-radius:9px;padding:12px;margin-top:9px}.etype{font-size:11px;color:#deb54a;font-weight:900}.etitle{font-size:20px;font-weight:900;margin:4px 0}.edesc{line-height:1.55;color:#cbc5ba}.choices{display:grid;gap:7px;margin-top:10px}.choice{text-align:left;min-height:54px}.choice strong{display:block}.hint{font-size:10px;color:#a8aeb2}
+.resultPanel{display:none;background:#11150f;border:1px solid #5f663f;border-radius:9px;padding:11px;margin-top:9px}.resultNarrative{line-height:1.6}.changes{margin-top:8px;border-top:1px dashed #3f464a;padding-top:7px;font-size:12px}.changes span{display:inline-block;margin:2px 5px 2px 0;padding:2px 5px;border:1px solid #555;border-radius:10px}
+.roster{display:grid;gap:6px}.person{background:#101419;border:1px solid #30363a;border-radius:8px;padding:7px}.tags span{display:inline-block;font-size:10px;border:1px solid #5c5438;border-radius:12px;padding:2px 5px;margin:2px}.trait{color:#a9cad8}
+.log{height:320px;overflow:auto;background:#0a0d10;border:1px solid #2d3236;border-radius:8px;padding:7px}.entry{padding:6px 2px;border-bottom:1px dashed #2e3337;line-height:1.45}.time{color:#c9a227;font-weight:900}.good{color:#9dc1a3}.bad{color:#df8e86}.big{color:#efc25c}.info{color:#9fc0cf}
+.pill{display:inline-block;border:1px solid #5b5338;border-radius:12px;padding:2px 6px;margin:2px;font-size:10px}
+.context{margin-top:8px;font-size:12px;line-height:1.5}
+.autoBox{display:none;margin-top:9px;background:#131821;border:1px solid #465764;border-radius:9px;padding:10px}.autoLog{height:180px;overflow:auto;background:#0a0d10;border-radius:7px;padding:6px;margin-top:6px}
+.finalBox{display:none;margin-top:9px;background:#17140d;border:1px solid #766536;border-radius:9px;padding:12px}
+.duelOverlay{display:none;position:fixed;inset:0;background:#000d;z-index:100;padding:10px}.duelFrame{width:100%;height:100%;border:0;background:#0d1013;border-radius:10px}
+@media(max-width:900px){.stats,.grid,.world{grid-template-columns:1fr}}
+</style>
+</head><body>
+<div class="wrap">
+<header><div><h1>낭만시대 열전 · 패싸움 최종 프로토타입</h1><div class="small">직위별 사건 엔진 · 선택 결과 서술/변화 요약 · 본게임 관계 변수 희귀 이벤트 · 맞장 v4.1 연동</div></div><div><button onclick="newBattle()">새 전투</button><button id="runBtn" onclick="toggleRun()">전투 시작</button></div></header>
+
+<div class="rankbar"><span class="small" style="align-self:center">직위</span>
+<button class="active" onclick="setRank('grunt',this)">말단</button><button onclick="setRank('leader',this)">조장</button><button onclick="setRank('officer',this)">간부</button><button onclick="setRank('boss',this)">두목</button></div>
+
+<div class="toolbar">
+<label>경찰 관계 <select id="policeSel" onchange="syncContext()"><option value="-40">적대</option><option value="0" selected>보통</option><option value="40">우호</option></select></label>
+<label>지역 우호도 <select id="localSel" onchange="syncContext()"><option value="-40">낮음</option><option value="0" selected>보통</option><option value="40">높음</option></select></label>
+<label>지역 영향력 <select id="influenceSel" onchange="syncContext()"><option value="-40">상대 우세</option><option value="0" selected>비슷함</option><option value="40">우리 우세</option></select></label>
+</div>
+
+<div class="stats">
+<div class="box team">우리 <b id="ourMen">?</b>명<br>사기 <span id="ourMorale">?</span></div>
+<div class="box"><div class="track"><div class="marker" id="marker"></div></div><div class="state" id="state"></div></div>
+<div class="box team">상대 <b id="enemyMen">?</b>명<br>사기 <span id="enemyMorale">?</span></div>
+</div>
+
+<div class="grid">
+<main>
+<div class="box">
+<div class="scope" id="scope"></div>
+<div id="objective" class="context"></div>
+<div class="world" id="world"></div>
+<div id="eventArea"></div>
+<div id="resultPanel" class="resultPanel"></div>
+<div id="autoBox" class="autoBox"><b>전투 이탈 — 남은 전투 자동 진행</b><div class="small">플레이어는 더 이상 개입하지 않습니다.</div><div id="autoLog" class="autoLog"></div></div>
+<div id="finalBox" class="finalBox"></div>
+</div>
+</main>
+
+<aside>
+<div class="box"><b id="rosterTitle">주변 인물</b><div id="roster" class="roster"></div></div>
+<div class="box" style="margin-top:8px"><b>전투 연대기</b><div id="log" class="log"></div></div>
+</aside>
+</div>
+</div>
+
+<div id="duelOverlay" class="duelOverlay">
+<div style="position:absolute;right:18px;top:14px;z-index:102">
+<button onclick="cancelBrokenDuel()">맞장 화면 닫기</button>
+</div>
+<iframe id="duelFrame" class="duelFrame"></iframe>
+</div>
+
+<script>
+const PEOPLE=[
+ ["강대웅","칠성",86,70,74,88, 3,4,5,4,3,"칠",9,"신중","셈이 밝고 말수가 적다. 봉투를 돌릴 곳을 정확히 안다."],
+ ["마성철","미친개",78,94,48,60, 5,3,1,1,2,"신",9,"난폭","붙으면 끝을 본다. 부두에서 그렇게 배웠다."],
+ ["오만복","공단 형님",78,66,64,80, 2,4,3,4,2,"대",9,"의리","사람이 끝없이 붙는다. 이유는 본인도 모른다."],
+ ["정태산","무등산",88,84,60,70, 4,5,2,2,1,"무",9,"완고","제 땅은 절대 안 내준다. 그게 전부다."],
+ ["배기훈","배 사장",74,58,86,84, 1,3,4,5,4,"동",9,"교활","싸우기 전에 이미 값을 다 매겨놓는다."],
+ ["한동식","백호",80,68,88,74, 2,3,3,4,5,"백",9,"침착","관가에 사람이 있다. 몇인지는 아무도 모른다."],
+ ["서기범","서 회장",82,64,80,78, 1,4,4,5,3,"청",9,"노회","배가 들어오는 날짜를 다 외우고 다닌다."],
+
+ ["노재국","명동 회계",66,48,82,86, 1,2,5,3,2,"칠",7,"신중","장부 하나로 조직을 쥐고 흔든다."],
+ ["최판호","판검사",70,60,78,66, 2,3,2,5,3,"칠",6,"교활","말로 사람을 눕힌다. 별명이 그래서 붙었다."],
+ ["임경준","면도날",58,86,50,44, 5,2,1,1,2,"칠",5,"냉정","말이 없다. 손이 빠르다."],
+ ["도상길","도끼",62,90,40,46, 5,2,1,1,1,"신",5,"난폭","별명 그대로다. 설명이 필요 없다."],
+ ["황보성","자갈치",74,76,54,62, 4,4,3,2,2,"신",6,"우직","맞아도 안 쓰러진다. 그걸로 올라왔다."],
+ ["배진수","물개",56,68,62,54, 3,2,2,3,5,"신",4,"눈치","어디에나 있고 아무도 못 봤다고 한다."],
+ ["구자영","쇠파이프",64,82,48,56, 5,2,1,2,1,"대",5,"난폭","공단 시절 손에 잡히던 게 그거였다."],
+ ["신만호","만호 형님",80,58,66,82, 2,5,3,4,2,"대",7,"의리","아우들이 이 사람 말이면 다 듣는다."],
+ ["양대석","곰",70,78,44,58, 4,4,1,1,1,"대",5,"우직","느리지만 절대 안 물러선다."],
+ ["조병국","돌부처",82,74,58,66, 3,5,2,2,1,"무",7,"완고","표정이 안 변한다. 이십 년째 그렇다."],
+ ["하칠성","산호랑이",60,88,46,50, 5,2,1,1,2,"무",5,"난폭","무등산에서 내려온 뒤로 계속 사고를 친다."],
+ ["문영배","여우",68,50,84,70, 1,2,3,5,4,"무",6,"교활","웃으면서 뒤통수를 친다."],
+ ["백승재","승냥이",66,80,56,50, 4,2,1,2,3,"동",5,"야심","위만 보고 올라간다. 옆은 안 본다."],
+ ["권상목","장대",76,72,60,64, 3,4,2,2,2,"동",6,"우직","키가 커서 어디 있든 눈에 띈다."],
+ ["유태경","약장수",58,44,80,86, 1,1,4,5,3,"동",6,"교활","없는 것도 팔아치운다."],
+ ["남기석","서기관",72,46,86,76, 1,2,4,5,4,"백",7,"신중","서류로 사람을 묻는다."],
+ ["표동일","표 선생",76,54,78,84, 1,3,5,4,4,"백",7,"침착","형사들이 형님이라고 부른다."],
+ ["나경일","박쥐",60,70,70,52, 3,2,2,3,5,"백",5,"눈치","어느 편인지 끝까지 모르겠다."],
+ ["차봉수","부두 차",72,84,50,58, 5,3,2,2,1,"청",6,"난폭","배에서 내리는 건 뭐든 자기 것이다."],
+ ["심학중","학",70,52,82,80, 1,3,5,4,2,"청",7,"신중","숫자를 절대 안 틀린다."],
+ ["방철규","철갑",78,76,54,62, 4,4,2,2,1,"청",6,"완고","막는 데는 이 사람만 한 자가 없다."],
+
+ ["김두철","김 사장",60,40,84,88, 1,1,5,4,2,null,0,"신중","사채업. 아무 편도 아니고 모두의 편이다."],
+ ["오상만","면도",54,84,44,42, 5,1,1,1,2,null,0,"냉정","전과 셋. 아직 스물다섯이다."],
+ ["진명호","번개",62,78,58,56, 4,2,2,2,4,null,0,"눈치","달리기 하나는 전국에서 제일이다."],
+ ["하동주","동주",74,66,64,68, 3,4,2,3,2,null,0,"의리","말보다 몸이 먼저 나간다. 나쁜 뜻이 아니다."],
+ ["성기웅","곰보",58,88,42,44, 5,1,1,1,1,null,0,"난폭","얼굴 흉터가 이력서다."],
+ ["윤경섭","안경",64,42,88,72, 1,2,3,5,4,null,0,"교활","대학을 다니다 그만뒀다. 이유는 말 안 한다."],
+ ["최인규","인규",70,70,66,64, 3,3,3,3,3,null,0,"우직","특별한 게 없다는 게 특별하다."],
+ ["류성태","칼잡이",56,92,48,38, 5,1,1,1,2,null,0,"냉정","손목 스냅이 남다르다더라."],
+ ["박노일","노일",78,58,70,72, 2,5,3,3,2,null,0,"의리","사람을 모으는 데 재주가 있다."],
+ ["정찬호","찬호",66,74,60,62, 4,3,2,2,3,null,0,"야심","형님 소리 듣는 게 인생 목표다."],
+ ["채경도","채 반장",70,56,80,70, 2,3,3,4,5,null,0,"침착","전직 형사. 옷을 벗은 이유가 있다."],
+ ["강진태","진태",74,80,52,58, 4,4,1,2,2,null,0,"완고","한번 정한 건 안 바꾼다."],
+ ["서동혁","동혁",68,64,76,74, 2,3,3,5,3,null,0,"신중","싸우기 전에 항상 한 번 더 묻는다."],
+ ["편상길","편 선생",62,38,90,76, 1,1,4,5,5,null,0,"교활","마흔여덟. 감옥에서 뭘 배워 나왔다."],
+ ["임철수","철수",60,76,54,56, 4,2,1,2,2,null,0,"우직","스물셋. 아직 겁이 없다."],
+ ["고만석","만석",80,60,68,78, 2,5,4,3,2,null,0,"의리","형님 소리 안 듣고도 형님 노릇을 한다."],
+ ["안기표","기표",68,82,50,54, 5,2,1,2,2,null,0,"야심","맞은 만큼 갚는다. 이자까지."],
+ ["황도현","도현",76,68,72,70, 3,4,3,3,3,null,0,"침착","조용히 다 지켜보고 있다."],
+ ["봉태호","봉 소장",66,46,84,80, 1,2,5,4,3,null,0,"신중","건설사 소장. 철거 용역을 댄다."],
+ ["심영달","영달이",64,72,58,60, 3,2,2,3,3,null,0,"눈치","붙임성 하나로 여기까지 왔다."],
+ ["우진철","진철",70,86,56,58, 5,3,2,2,2,null,0,"난폭","아무도 못 말린다. 본인도 못 말린다."],
+ ["마태식","태식이",72,78,64,64, 4,3,2,3,4,null,0,"야심","마성철의 먼 조카라고 한다. 진짜인지는 모른다."],
+];
+const DUEL_HTML="<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>낭만시대 열전 — 1:1 맞장 프로토타입 v2</title>\n<style>\n:root{\n --bg:#0e1114;--panel:#171c21;--panel2:#101419;--line:#353a3f;--gold:#c9a227;\n --ink:#eee4cc;--muted:#9da0a3;--red:#9c4740;--blue:#557d92;--green:#6d8c72;--stam:#6f8f75;\n}\n*{box-sizing:border-box}\nbody{margin:0;background:linear-gradient(180deg,#0a0c0f,#17120f);color:var(--ink);font-family:system-ui,-apple-system,\"Noto Sans KR\",sans-serif}\n.wrap{max-width:1180px;margin:auto;padding:20px}\nheader{display:flex;justify-content:space-between;gap:16px;align-items:end;border-bottom:1px solid #625a38;padding-bottom:14px}\nh1{margin:0;font-family:serif;font-size:30px}.sub{color:var(--muted);font-size:13px}\n.setup{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}\nselect,button{background:#20251f;color:var(--ink);border:1px solid #5a5339;border-radius:7px;padding:9px 10px}\nbutton{cursor:pointer;font-weight:700}button:hover{border-color:var(--gold)}button:disabled{opacity:.35;cursor:not-allowed}\n.grid{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:14px}\n.card{background:rgba(23,28,33,.96);border:1px solid var(--line);border-radius:11px;padding:14px}\n.name{font-size:22px;font-weight:800}.alias{color:var(--gold);font-size:13px}\n.tags{margin:6px 0}.tag{display:inline-block;padding:4px 7px;border-radius:20px;border:1px solid #574f35;font-size:12px;margin:2px}.bad{border-color:#734541;color:#e3aaa4}.special{border-color:#4d6d7a;color:#a8cad9}\n.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}\n.stat{background:#101419;border-radius:7px;padding:7px;text-align:center;font-size:12px}.stat b{display:block;font-size:17px}\n.meter-label{display:flex;justify-content:space-between;font-size:12px;margin-top:8px}\n.meter{height:12px;background:#090b0d;border-radius:20px;overflow:hidden}.meter i{display:block;height:100%;transition:width .25s}\n.hp i{background:var(--red)}.mom i{background:#b4922e}.sta i{background:var(--stam)}\n.log{height:430px;overflow:auto;background:#0c0f12;border:1px solid #2c3034;border-radius:8px;padding:10px}\n.entry{padding:8px 2px;border-bottom:1px dashed #2d3135;line-height:1.5}.turn{color:var(--gold);font-weight:800}.hurt{color:#e18a82}.good{color:#9bc1a4}.info{color:#9fc0cf}.big{color:#f2c45d}\n.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.actions button{padding:11px}\n.analysis{background:#11161a;border-left:3px solid var(--blue);padding:9px;margin-bottom:9px;font-size:13px;line-height:1.5}\n.result{display:none;margin-top:10px;border:1px solid #6f6134;padding:10px;border-radius:7px}\n.hint{font-size:12px;color:var(--muted);line-height:1.5}.small{font-size:11px;color:var(--muted)}.statusLine{margin-top:8px;min-height:24px}.statusChip{display:inline-block;padding:3px 6px;border-radius:14px;background:#2a1717;border:1px solid #7b4a43;color:#efb0a9;font-size:11px;margin:2px}\n@media(max-width:900px){.grid{grid-template-columns:1fr}.log{height:320px}}\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n<header>\n<div>\n<h1>낭만시대 열전 · 1:1 맞장 실험실 v2</h1>\n<div class=\"sub\">v32 실제 인물 명단 기반 · 본편 수정 없음 · 스태미너/분석/행동변형 특성 테스트</div>\n</div>\n<button onclick=\"randomMatch()\">새 대진</button>\n</header>\n\n<div class=\"setup\">\n<label>성격 <select id=\"pers\"></select></label>\n<label>기본 특성 <select id=\"trait\"></select></label>\n<label>전투 특성 <select id=\"combatTrait\"></select></label>\n<label>결함 <select id=\"flaw\"></select></label>\n<button onclick=\"reroll()\">주인공 리롤</button>\n<button onclick=\"enemy()\">상대 교체</button>\n<button onclick=\"startFight()\">맞장 시작</button>\n</div>\n\n<div class=\"grid\">\n<section class=\"card\" id=\"left\"></section>\n<section class=\"card\">\n<div class=\"analysis\" id=\"analysis\">상대의 움직임을 살피는 중이다.</div>\n<div class=\"log\" id=\"log\"></div>\n<div class=\"result\" id=\"result\"></div>\n<div class=\"actions\">\n<button onclick=\"act('measure')\">거리를 잰다</button>\n<button onclick=\"act('press')\">파고든다</button>\n<button onclick=\"act('brawl')\">정면으로 붙는다</button>\n<button onclick=\"act('counter')\">받아친다</button>\n<button onclick=\"act('endure')\">버틴다</button>\n<button id=\"finishBtn\" onclick=\"act('finish')\" disabled>승부수를 던진다</button>\n</div>\n<p class=\"hint\">핵심 자원은 체력·스태미너·기세 3개입니다. 거리재기는 공격을 포기하고 분석을 시도합니다. 버티기는 피해를 줄이며 스태미너를 크게 회복합니다. v4.1: 상태이상 상대를 AI가 적극적으로 몰아붙입니다. 파고들기는 압박형, 정면승부는 서로 맞는 걸 감수하는 난타전입니다.</p>\n</section>\n<section class=\"card\" id=\"right\"></section>\n</div>\n</div>\n\n<script>\nconst PEOPLE = [\n [\"강대웅\",\"칠성\",86,70,74,88, 3,4,5,4,3,\"칠\",9,\"신중\",\"셈이 밝고 말수가 적다. 봉투를 돌릴 곳을 정확히 안다.\"],\n [\"마성철\",\"미친개\",78,94,48,60, 5,3,1,1,2,\"신\",9,\"난폭\",\"붙으면 끝을 본다. 부두에서 그렇게 배웠다.\"],\n [\"오만복\",\"공단 형님\",78,66,64,80, 2,4,3,4,2,\"대\",9,\"의리\",\"사람이 끝없이 붙는다. 이유는 본인도 모른다.\"],\n [\"정태산\",\"무등산\",88,84,60,70, 4,5,2,2,1,\"무\",9,\"완고\",\"제 땅은 절대 안 내준다. 그게 전부다.\"],\n [\"배기훈\",\"배 사장\",74,58,86,84, 1,3,4,5,4,\"동\",9,\"교활\",\"싸우기 전에 이미 값을 다 매겨놓는다.\"],\n [\"한동식\",\"백호\",80,68,88,74, 2,3,3,4,5,\"백\",9,\"침착\",\"관가에 사람이 있다. 몇인지는 아무도 모른다.\"],\n [\"서기범\",\"서 회장\",82,64,80,78, 1,4,4,5,3,\"청\",9,\"노회\",\"배가 들어오는 날짜를 다 외우고 다닌다.\"],\n\n [\"노재국\",\"명동 회계\",66,48,82,86, 1,2,5,3,2,\"칠\",7,\"신중\",\"장부 하나로 조직을 쥐고 흔든다.\"],\n [\"최판호\",\"판검사\",70,60,78,66, 2,3,2,5,3,\"칠\",6,\"교활\",\"말로 사람을 눕힌다. 별명이 그래서 붙었다.\"],\n [\"임경준\",\"면도날\",58,86,50,44, 5,2,1,1,2,\"칠\",5,\"냉정\",\"말이 없다. 손이 빠르다.\"],\n [\"도상길\",\"도끼\",62,90,40,46, 5,2,1,1,1,\"신\",5,\"난폭\",\"별명 그대로다. 설명이 필요 없다.\"],\n [\"황보성\",\"자갈치\",74,76,54,62, 4,4,3,2,2,\"신\",6,\"우직\",\"맞아도 안 쓰러진다. 그걸로 올라왔다.\"],\n [\"배진수\",\"물개\",56,68,62,54, 3,2,2,3,5,\"신\",4,\"눈치\",\"어디에나 있고 아무도 못 봤다고 한다.\"],\n [\"구자영\",\"쇠파이프\",64,82,48,56, 5,2,1,2,1,\"대\",5,\"난폭\",\"공단 시절 손에 잡히던 게 그거였다.\"],\n [\"신만호\",\"만호 형님\",80,58,66,82, 2,5,3,4,2,\"대\",7,\"의리\",\"아우들이 이 사람 말이면 다 듣는다.\"],\n [\"양대석\",\"곰\",70,78,44,58, 4,4,1,1,1,\"대\",5,\"우직\",\"느리지만 절대 안 물러선다.\"],\n [\"조병국\",\"돌부처\",82,74,58,66, 3,5,2,2,1,\"무\",7,\"완고\",\"표정이 안 변한다. 이십 년째 그렇다.\"],\n [\"하칠성\",\"산호랑이\",60,88,46,50, 5,2,1,1,2,\"무\",5,\"난폭\",\"무등산에서 내려온 뒤로 계속 사고를 친다.\"],\n [\"문영배\",\"여우\",68,50,84,70, 1,2,3,5,4,\"무\",6,\"교활\",\"웃으면서 뒤통수를 친다.\"],\n [\"백승재\",\"승냥이\",66,80,56,50, 4,2,1,2,3,\"동\",5,\"야심\",\"위만 보고 올라간다. 옆은 안 본다.\"],\n [\"권상목\",\"장대\",76,72,60,64, 3,4,2,2,2,\"동\",6,\"우직\",\"키가 커서 어디 있든 눈에 띈다.\"],\n [\"유태경\",\"약장수\",58,44,80,86, 1,1,4,5,3,\"동\",6,\"교활\",\"없는 것도 팔아치운다.\"],\n [\"남기석\",\"서기관\",72,46,86,76, 1,2,4,5,4,\"백\",7,\"신중\",\"서류로 사람을 묻는다.\"],\n [\"표동일\",\"표 선생\",76,54,78,84, 1,3,5,4,4,\"백\",7,\"침착\",\"형사들이 형님이라고 부른다.\"],\n [\"나경일\",\"박쥐\",60,70,70,52, 3,2,2,3,5,\"백\",5,\"눈치\",\"어느 편인지 끝까지 모르겠다.\"],\n [\"차봉수\",\"부두 차\",72,84,50,58, 5,3,2,2,1,\"청\",6,\"난폭\",\"배에서 내리는 건 뭐든 자기 것이다.\"],\n [\"심학중\",\"학\",70,52,82,80, 1,3,5,4,2,\"청\",7,\"신중\",\"숫자를 절대 안 틀린다.\"],\n [\"방철규\",\"철갑\",78,76,54,62, 4,4,2,2,1,\"청\",6,\"완고\",\"막는 데는 이 사람만 한 자가 없다.\"],\n\n [\"김두철\",\"김 사장\",60,40,84,88, 1,1,5,4,2,null,0,\"신중\",\"사채업. 아무 편도 아니고 모두의 편이다.\"],\n [\"오상만\",\"면도\",54,84,44,42, 5,1,1,1,2,null,0,\"냉정\",\"전과 셋. 아직 스물다섯이다.\"],\n [\"진명호\",\"번개\",62,78,58,56, 4,2,2,2,4,null,0,\"눈치\",\"달리기 하나는 전국에서 제일이다.\"],\n [\"하동주\",\"동주\",74,66,64,68, 3,4,2,3,2,null,0,\"의리\",\"말보다 몸이 먼저 나간다. 나쁜 뜻이 아니다.\"],\n [\"성기웅\",\"곰보\",58,88,42,44, 5,1,1,1,1,null,0,\"난폭\",\"얼굴 흉터가 이력서다.\"],\n [\"윤경섭\",\"안경\",64,42,88,72, 1,2,3,5,4,null,0,\"교활\",\"대학을 다니다 그만뒀다. 이유는 말 안 한다.\"],\n [\"최인규\",\"인규\",70,70,66,64, 3,3,3,3,3,null,0,\"우직\",\"특별한 게 없다는 게 특별하다.\"],\n [\"류성태\",\"칼잡이\",56,92,48,38, 5,1,1,1,2,null,0,\"냉정\",\"손목 스냅이 남다르다더라.\"],\n [\"박노일\",\"노일\",78,58,70,72, 2,5,3,3,2,null,0,\"의리\",\"사람을 모으는 데 재주가 있다.\"],\n [\"정찬호\",\"찬호\",66,74,60,62, 4,3,2,2,3,null,0,\"야심\",\"형님 소리 듣는 게 인생 목표다.\"],\n [\"채경도\",\"채 반장\",70,56,80,70, 2,3,3,4,5,null,0,\"침착\",\"전직 형사. 옷을 벗은 이유가 있다.\"],\n [\"강진태\",\"진태\",74,80,52,58, 4,4,1,2,2,null,0,\"완고\",\"한번 정한 건 안 바꾼다.\"],\n [\"서동혁\",\"동혁\",68,64,76,74, 2,3,3,5,3,null,0,\"신중\",\"싸우기 전에 항상 한 번 더 묻는다.\"],\n [\"편상길\",\"편 선생\",62,38,90,76, 1,1,4,5,5,null,0,\"교활\",\"마흔여덟. 감옥에서 뭘 배워 나왔다.\"],\n [\"임철수\",\"철수\",60,76,54,56, 4,2,1,2,2,null,0,\"우직\",\"스물셋. 아직 겁이 없다.\"],\n [\"고만석\",\"만석\",80,60,68,78, 2,5,4,3,2,null,0,\"의리\",\"형님 소리 안 듣고도 형님 노릇을 한다.\"],\n [\"안기표\",\"기표\",68,82,50,54, 5,2,1,2,2,null,0,\"야심\",\"맞은 만큼 갚는다. 이자까지.\"],\n [\"황도현\",\"도현\",76,68,72,70, 3,4,3,3,3,null,0,\"침착\",\"조용히 다 지켜보고 있다.\"],\n [\"봉태호\",\"봉 소장\",66,46,84,80, 1,2,5,4,3,null,0,\"신중\",\"건설사 소장. 철거 용역을 댄다.\"],\n [\"심영달\",\"영달이\",64,72,58,60, 3,2,2,3,3,null,0,\"눈치\",\"붙임성 하나로 여기까지 왔다.\"],\n [\"우진철\",\"진철\",70,86,56,58, 5,3,2,2,2,null,0,\"난폭\",\"아무도 못 말린다. 본인도 못 말린다.\"],\n [\"마태식\",\"태식이\",72,78,64,64, 4,3,2,3,4,null,0,\"야심\",\"마성철의 먼 조카라고 한다. 진짜인지는 모른다.\"],\n];\n\nconst PERS = {\n \"불같은 성미\":{press:1.5,brawl:1.4,counter:.6,measure:.7,endure:.6,desc:\"시비를 피하지 않고 몰아붙인다.\"},\n \"과묵한 승부사\":{press:.9,brawl:.9,counter:1.2,measure:1.3,endure:1.0,desc:\"상대를 읽고 무리하지 않는다.\"},\n \"의리파\":{press:1.05,brawl:1.15,counter:.9,measure:.85,endure:1.1,desc:\"정면 승부를 피하지 않는다.\"},\n \"냉정한 현실주의자\":{press:.8,brawl:.7,counter:1.3,measure:1.35,endure:1.0,desc:\"불리한 교환을 피한다.\"},\n \"야심가\":{press:1.2,brawl:1.05,counter:1.0,measure:.9,endure:.8,desc:\"주도권을 먼저 잡으려 한다.\"},\n \"능글맞은 책략가\":{press:.75,brawl:.55,counter:1.4,measure:1.45,endure:.9,desc:\"기다렸다가 허점을 찌른다.\"},\n \"직선파\":{press:1.2,brawl:1.3,counter:.7,measure:.65,endure:.9,desc:\"복잡하게 재지 않는다.\"},\n \"자존심 강함\":{press:1.0,brawl:1.4,counter:.8,measure:.75,endure:.7,desc:\"밀리면 정면승부를 고집한다.\"},\n \"겁 없는 돌격파\":{press:1.55,brawl:1.35,counter:.5,measure:.5,endure:.55,desc:\"열세에서도 물러서지 않는다.\"},\n \"신중한 관망자\":{press:.6,brawl:.5,counter:1.35,measure:1.55,endure:1.2,desc:\"위험을 줄이며 관찰한다.\"},\n \"호인\":{press:.9,brawl:.9,counter:.9,measure:1.05,endure:1.15,desc:\"극단적인 선택이 적다.\"},\n \"독종\":{press:1.25,brawl:1.3,counter:.75,measure:.6,endure:1.2,desc:\"체력이 떨어져도 잘 물러서지 않는다.\"}\n};\n\nconst BASE_TRAITS = {\n \"없음\":{},\n \"타고난 싸움꾼\":{juk:8},\n \"강골\":{mat:7,vit:6},\n \"날쌘 몸\":{nal:10},\n \"큰 체격\":{juk:5,mat:7,nal:-4},\n \"강심장\":{moraleResist:.30},\n \"악바리\":{lowHpMat:8},\n \"사람 보는 눈\":{meo:5,analysis:+12},\n \"험상궂은 인상\":{startMom:+6}\n};\n\nconst COMBAT_TRAITS = {\n \"없음\":{},\n \"카운터 타격가\":{counterVsPress:1.30,desc:\"파고드는 상대를 받아칠 때 피해 +30%\"},\n \"압박의 달인\":{pressVsEndure:1.25,endureRecoveryBlock:.50,desc:\"버티는 상대를 압박할 때 피해 +25%, 회복 방해\"},\n \"난타전 체질\":{brawlCost:.75,brawlTaken:.90,desc:\"정면승부 스태미너 소모 -25%, 정면승부로 받는 피해 -10%\"},\n \"거리 싸움꾼\":{measureEvade:+.10,analysis:+15,desc:\"거리재기 회피와 분석 보너스\"},\n \"집요한 추격자\":{pressVsMeasure:1.22,desc:\"거리재는 상대를 따라붙을 때 피해 증가\"},\n \"철벽\":{endureReduce:.20,downResist:.10,desc:\"버티기 피해 감소 강화, 다운 저항\"},\n \"숨이 길다\":{end:8,maxSta:+12,naturalSta:+3,desc:\"지구력 +8, 최대 스태미너 추가 +12, 턴 종료 회복 +3\"},\n \"폭발적인 체력\":{highStaDamage:1.10,lowStaDamage:.82,desc:\"스태미너 70+ 피해 +10%, 25- 피해 -18%\"},\n \"몸싸움 장인\":{vsEndureMom:+7,vsBrawlMom:+4,desc:\"버티기/정면승부 상대의 기세를 더 깎음\"},\n \"페인트의 달인\":{predictionNoise:+.18,desc:\"상대 분석의 정확도를 낮춤\"}\n};\n\nconst FLAWS = {\n \"없음\":{},\n \"절뚝거림\":{nal:-15},\n \"약한 무릎\":{nal:-7,lateNal:-5},\n \"한쪽 눈의 시야 손상\":{nal:-7,counterPenalty:.08},\n \"고질적인 허리 통증\":{mat:-8},\n \"약골\":{mat:-12},\n \"유리턱\":{down:+.15},\n \"겁이 많음\":{moraleFragile:.20},\n \"눈치 없음\":{meo:-6,analysis:-10},\n \"충동적\":{reckless:.18}\n};\n\nconst TEMP_STATUS={\n \"그로기\":{turns:2,attackFail:.38,staRecovery:.65,desc:\"공격 동작이 자주 무너지고 회복도 더디다.\"},\n \"다리가 풀림\":{turns:2,nal:-14,desc:\"날렵함이 크게 떨어진다.\"},\n \"시야 흐림\":{turns:2,counterMul:.68,analysis:-20,desc:\"받아치기와 분석이 흔들린다.\"},\n \"숨이 참\":{turns:2,costMul:1.18,staRecovery:.78,desc:\"스태미너 운용이 크게 나빠진다.\"},\n \"주먹이 저림\":{turns:2,juk:-10,desc:\"주먹 위력이 떨어진다.\"},\n \"겁을 먹음\":{turns:2,momCap:62,attackFail:.18,desc:\"기세가 꺾이고 공격을 머뭇거린다.\"}\n};\nfunction statusObj(x,n){return x.statuses.find(s=>s.name===n)}\nfunction addStatus(x,n){\n let s=statusObj(x,n); if(s){s.turns=Math.max(s.turns,TEMP_STATUS[n].turns);return}\n x.statuses.push({name:n,turns:TEMP_STATUS[n].turns});\n add(`<span class=\"hurt\">${x.name} — ${n}: ${TEMP_STATUS[n].desc}</span>`);\n}\nfunction eff(x,k){\n let v=x[k]; for(const s of x.statuses)v+=TEMP_STATUS[s.name]?.[k]||0;\n if(k===\"nal\"&&x.flaw===\"약한 무릎\"&&F&&F.turn>=8)v+=FLAWS[x.flaw]?.lateNal||0;\n return v;\n}\nfunction attackFail(x,a){\n if(![\"press\",\"brawl\",\"counter\",\"finish\"].includes(a))return false;\n let p=x.statuses.reduce((s,z)=>s+(TEMP_STATUS[z.name]?.attackFail||0),0);\n if(Math.random()<Math.min(.72,p)){x.mom=cl(x.mom-5,0,100);add(`<span class=\"hurt\">${x.name}이 상태 이상 때문에 공격 동작을 제대로 이어가지 못했다.</span>`);return true}\n return false;\n}\nfunction statusCost(x){return x.statuses.reduce((m,z)=>m*(TEMP_STATUS[z.name]?.costMul||1),1)}\nfunction statusRec(x){return x.statuses.reduce((m,z)=>m*(TEMP_STATUS[z.name]?.staRecovery||1),1)}\nfunction statusCounter(x){return x.statuses.reduce((m,z)=>m*(TEMP_STATUS[z.name]?.counterMul||1),1)}\nfunction statusAnalysis(x){return x.statuses.reduce((s,z)=>s+(TEMP_STATUS[z.name]?.analysis||0),0)}\nfunction momCap(x){let c=100;for(const z of x.statuses)if(TEMP_STATUS[z.name]?.momCap)c=Math.min(c,TEMP_STATUS[z.name].momCap);return c}\nfunction tickStatus(x){x.statuses.forEach(s=>s.turns--);x.statuses=x.statuses.filter(s=>s.turns>0)}\n\n\nconst ACT = {\n measure:{n:\"거리를 잰다\",cost:3},\n press:{n:\"파고든다\",cost:12},\n brawl:{n:\"정면으로 붙는다\",cost:18},\n counter:{n:\"받아친다\",cost:8},\n endure:{n:\"버틴다\",cost:0},\n finish:{n:\"승부수를 던진다\",cost:22}\n};\n\nconst MATCH = {\n measure:{measure:1,press:.80,brawl:1.18,counter:1.0,endure:.95,finish:1.12},\n press:{measure:1.25,press:1,brawl:.96,counter:.76,endure:1.08,finish:1.02},\n brawl:{measure:.83,press:1.06,brawl:1,counter:.90,endure:1.18,finish:1.05},\n counter:{measure:.70,press:1.34,brawl:1.14,counter:.90,endure:.72,finish:1.20},\n endure:{measure:.82,press:.90,brawl:.84,counter:1.08,endure:.90,finish:.78},\n finish:{measure:.78,press:1.05,brawl:1.10,counter:.72,endure:1.28,finish:1}\n};\n\nlet me,en,F=null;\nconst ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;\nconst pick=a=>a[ri(0,a.length-1)];\nconst cl=(x,a,b)=>Math.max(a,Math.min(b,x));\n\nfunction rosterPerson(){\n let d=PEOPLE.length?pick(PEOPLE):null;\n if(!d)return {name:\"박춘식\",alias:\"시장통 독사\",juk:58,mat:56,nal:52,meo:48,vit:58,end:56};\n return {\n   name:d[0],alias:d[1]||\"\",\n   juk:+d[3]||58,\n   mat:Math.round((+d[3]||55)*.78+(+d[2]||50)*.22),\n   nal:Math.round((+d[3]||55)*.42+(+d[4]||50)*.26+22),\n   meo:+d[4]||50,\n   vit:ri(44,68),\n   end:ri(44,68)\n };\n}\n\nfunction val(id){return document.getElementById(id).value}\n\nfunction reroll(){\n me={name:\"최용길\",alias:\"무명의 떠돌이\",\n     juk:ri(40,50),mat:ri(40,50),nal:ri(40,50),meo:ri(40,50),vit:ri(40,50),end:ri(40,50),\n     pers:val(\"pers\"),trait:val(\"trait\"),combatTrait:val(\"combatTrait\"),flaw:val(\"flaw\")};\n render();\n}\n\nfunction enemy(){\n let p=rosterPerson();\n p.pers=pick(Object.keys(PERS));\n p.trait=pick(Object.keys(BASE_TRAITS));\n p.combatTrait=pick(Object.keys(COMBAT_TRAITS));\n p.flaw=Math.random()<.38?pick(Object.keys(FLAWS)):\"없음\";\n en=p; render();\n}\n\nfunction randomMatch(){reroll();enemy();startFight()}\n\nfunction applied(p){\n let z={juk:p.juk,mat:p.mat,nal:p.nal,meo:p.meo,vit:p.vit??45,end:p.end??45};\n for(const src of [BASE_TRAITS[p.trait]||{},FLAWS[p.flaw]||{}]){\n   for(const k of [\"juk\",\"mat\",\"nal\",\"meo\",\"vit\",\"end\"]) z[k]+=src[k]||0;\n }\n return z;\n}\n\nfunction fighter(p){\n let s=applied(p), bt=BASE_TRAITS[p.trait]||{}, ct=COMBAT_TRAITS[p.combatTrait]||{};\n let maxHp=60+s.vit;\n let maxSta=60+s.end+(ct.maxSta||0);\n return {...p,...s,maxHp,hp:maxHp,maxSta,sta:maxSta,mom:50+(bt.startMom||0),downs:0,analysisBonus:(bt.analysis||0)+(ct.analysis||0)+(FLAWS[p.flaw]?.analysis||0),pred:null,lastAct:null,counterStreak:0,statuses:[],injuryFlags:[]};\n}\n\nfunction card(p,f){\n let s=applied(p), ct=COMBAT_TRAITS[p.combatTrait]||{};\n return `<div class=\"name\">${p.name} <span class=\"alias\">${p.alias||\"\"}</span></div>\n <div class=\"tags\"><span class=\"tag\">${p.pers}</span><span class=\"tag\">${p.trait}</span><span class=\"tag special\">${p.combatTrait}</span>${p.flaw!==\"없음\"?`<span class=\"tag bad\">${p.flaw}</span>`:\"\"}</div>\n <div class=\"stats\">\n <div class=\"stat\">주먹<b>${s.juk}</b></div><div class=\"stat\">맷집<b>${s.mat}</b></div><div class=\"stat\">날렵<b>${s.nal}</b></div><div class=\"stat\">체력<b>${s.vit}</b></div><div class=\"stat\">지구력<b>${s.end}</b></div><div class=\"stat\">머리<b>${s.meo}</b></div></div>\n <div class=\"hint\">${PERS[p.pers]?.desc||\"\"}${ct.desc?`<br><b>${p.combatTrait}</b> — ${ct.desc}`:\"\"}</div>\n ${f?`<div class=\"statusLine\">${f.statuses.length?f.statuses.map(s=>`<span class=\"statusChip\">${s.name} ${s.turns}턴</span>`).join(\"\"):`<span class=\"small\">상태: 정상</span>`}</div>\n <div class=\"meter-label\"><span>체력</span><b>${Math.round(f.hp)}/${f.maxHp}</b></div><div class=\"meter hp\"><i style=\"width:${100*f.hp/f.maxHp}%\"></i></div>\n <div class=\"meter-label\"><span>스태미너</span><b>${Math.round(f.sta)}/${f.maxSta}</b></div><div class=\"meter sta\"><i style=\"width:${100*f.sta/f.maxSta}%\"></i></div>\n <div class=\"meter-label\"><span>기세</span><b>${Math.round(f.mom)}</b></div><div class=\"meter mom\"><i style=\"width:${f.mom}%\"></i></div>`:\"\"}`;\n}\n\nfunction render(){\n if(!me)reroll();\n if(!en)enemy();\n document.getElementById(\"left\").innerHTML=card(me,F?.a);\n document.getElementById(\"right\").innerHTML=card(en,F?.b);\n}\n\nfunction startFight(){\n F={a:fighter(me),b:fighter(en),turn:0,over:false};\n document.getElementById(\"log\").innerHTML=\"\";\n document.getElementById(\"result\").style.display=\"none\";\n document.querySelectorAll(\".actions button\").forEach(b=>b.disabled=false);\n add(`<span class=\"big\">${me.name}과 ${en.name}이 마주 섰다.</span>`);\n render(); updateAnalysis(); updateFinisher();\n}\n\nfunction weightsFor(p){\n let w={...PERS[p.pers]};\n const target = (F && F.a && F.b) ? (p===F.b ? F.a : F.b) : null;\n\n if(p.pers===\"자존심 강함\"&&p.mom<40)w.brawl*=1.6;\n if(p.pers===\"독종\"&&p.hp<35){w.press*=1.35;w.brawl*=1.30;w.endure*=.7}\n if(FLAWS[p.flaw]?.reckless&&Math.random()<FLAWS[p.flaw].reckless){w.brawl*=2}\n\n // 자기 스태미너가 바닥이면 상태이상 상대라도 무리하지 않을 수 있다.\n if(p.sta<28){w.endure*=2.3;w.brawl*=.45;w.press*=.65}\n\n // 상대 상태이상 인지: 멀쩡한데도 버티기/거리재기를 반복하는 AI를 방지.\n if(target && target.statuses && target.statuses.length){\n   const names=target.statuses.map(s=>s.name);\n   const severe=names.includes(\"그로기\")||names.includes(\"다리가 풀림\")||names.includes(\"시야 흐림\");\n   if(severe && p.sta>=34){\n     w.press*=1.85;\n     w.brawl*=1.55;\n     w.counter*=.82;\n     w.measure*=.38;\n     w.endure*=.22;\n     if(target.hp/target.maxHp<=.38) w.brawl*=1.25;\n   }else if(p.sta>=30){\n     w.press*=1.35;\n     w.brawl*=1.18;\n     w.measure*=.70;\n     w.endure*=.55;\n   }\n\n   // 성격별 마무리 성향\n   if([\"겁 없는 돌격파\",\"불같은 성미\",\"독종\"].includes(p.pers) && p.sta>=28){\n     w.press*=1.20; w.brawl*=1.18; w.endure*=.75;\n   }\n   if(p.pers===\"신중한 관망자\" && p.sta<42){\n     w.press*=.88; w.brawl*=.82; w.endure*=1.12;\n   }\n }\n\n // 체력이 많이 빠진 상대는 공격적으로 끝내려 한다.\n if(target && target.hp/target.maxHp<=.28 && p.sta>=36){\n   w.press*=1.45; w.brawl*=1.35; w.measure*=.55; w.endure*=.35;\n }\n\n if(F && F.a && F.a.counterStreak>=2){\n   const iq = p.meo||50;\n   const adapt = 1 + Math.min(.9,(iq-35)/70);\n   w.measure*=1.35*adapt;\n   w.endure*=1.25*adapt;\n   w.press*=.72;\n   w.brawl*=.82;\n }\n\n // 최소 가중치 보장\n for(const k of Object.keys(w)) w[k]=Math.max(.03,w[k]||.03);\n return w;\n}\n\nfunction enemyChoice(peek=false){\n let p=F.b,w=weightsFor(p),keys=[\"press\",\"brawl\",\"counter\",\"measure\",\"endure\"],sum=keys.reduce((s,k)=>s+(w[k]||1),0),x=Math.random()*sum;\n for(const k of keys){x-=w[k]||1;if(x<=0)return k}\n return \"measure\";\n}\n\nfunction analyze(observer,target){\n let base=35 + eff(observer,\"meo\")*.55 + observer.analysisBonus + statusAnalysis(observer);\n if(observer.lastAct===\"measure\")base+=20;\n let noise=COMBAT_TRAITS[target.combatTrait]?.predictionNoise||0;\n base*=1-noise;\n let actual=enemyChoice(true);\n let roll=Math.random()*100;\n if(roll<base*.42) return {level:3,act:actual,text:`다음 움직임이 꽤 선명하다. <b>${ACT[actual].n}</b> 가능성이 높다.`};\n if(roll<base*.78){\n   let aggressive=[\"press\",\"brawl\",\"finish\"].includes(actual);\n   return {level:2,act:null,text:aggressive?\"상대가 앞으로 나올 준비를 한다. 공격적인 선택 가능성이 높다.\":\"상대가 기다리거나 숨을 고르려는 기색이 보인다.\"};\n }\n return {level:1,act:null,text:`${target.pers} 성향은 보이지만 다음 수까지는 읽기 어렵다.`};\n}\n\nfunction updateAnalysis(){\n if(!F||F.over)return;\n let txt=\"상대의 다음 수는 아직 알 수 없다.\";\n if(F.a.pred)txt=F.a.pred.text;\n document.getElementById(\"analysis\").innerHTML=txt;\n}\n\nfunction act(aAct){\n if(!F||F.over)return;\n let a=F.a,b=F.b;\n if(aAct!==\"endure\" && a.sta<ACT[aAct].cost){add(`<span class=\"hurt\">스태미너가 부족하다.</span>`);return}\n let bAct=enemyChoice();\n F.turn++;\n resolvePair(a,b,aAct,bAct,true);\n if(!F.over)resolvePair(b,a,bAct,aAct,false);\n if(!F.over){\n   naturalRecovery(a); naturalRecovery(b);\n   if(aAct===\"measure\") a.pred=analyze(a,b); else if(a.pred&&a.pred.level<3) a.pred=null;\n   if(bAct===\"measure\") b.pred=analyze(b,a); else b.pred=null;\n   tickStatus(a);tickStatus(b);\n }\n checkEnd(); render(); updateAnalysis(); updateFinisher();\n}\n\nfunction staminaCost(x,act){\n let cost=ACT[act].cost,ct=COMBAT_TRAITS[x.combatTrait]||{};\n if(act===\"brawl\"&&ct.brawlCost)cost*=ct.brawlCost;\n cost*=statusCost(x);\n return Math.round(cost);\n}\n\nfunction naturalRecovery(x){\n let gain=(4+(COMBAT_TRAITS[x.combatTrait]?.naturalSta||0))*statusRec(x);\n x.sta=cl(x.sta+gain,0,x.maxSta);x.mom=cl(x.mom,0,momCap(x));\n}\n\nfunction damageModForSta(x){\n let ct=COMBAT_TRAITS[x.combatTrait]||{};\n if(x.sta>=70&&ct.highStaDamage)return ct.highStaDamage;\n if(x.sta<=25&&ct.lowStaDamage)return ct.lowStaDamage;\n return x.sta<=25?.82:x.sta<=45?.92:1;\n}\n\nfunction resolvePair(x,y,xa,ya,isPlayer){\n x.lastAct=xa;\n let ct=COMBAT_TRAITS[x.combatTrait]||{}, yct=COMBAT_TRAITS[y.combatTrait]||{};\n if(xa===\"counter\")x.counterStreak=(x.counterStreak||0)+1; else x.counterStreak=0;\n if(xa===\"measure\"){\n   let cost=staminaCost(x,xa);x.sta=cl(x.sta-cost,0,x.maxSta);\n   x.pred=analyze(x,y);\n   add(`<span class=\"turn\">${F.turn}턴</span> ${x.name}이 거리를 재며 움직임을 살핀다.`, \"info\");\n   return;\n }\n if(xa===\"endure\"){\n   let recover=(22 + eff(x,\"mat\")*.08)*statusRec(x);\n   if(ya===\"press\"&&COMBAT_TRAITS[y.combatTrait]?.endureRecoveryBlock!=null)recover*=COMBAT_TRAITS[y.combatTrait].endureRecoveryBlock;\n   x.sta=cl(x.sta+recover,0,x.maxSta);\n   x.mom=cl(x.mom+4,0,100);\n   add(`<span class=\"turn\">${F.turn}턴</span> ${x.name}이 중심을 낮추고 숨을 고른다. <span class=\"good\">스태미너 +${Math.round(recover)}</span>`);\n   return;\n }\n let cost=staminaCost(x,xa); x.sta=cl(x.sta-cost,0,x.maxSta);\n let edge=MATCH[xa]?.[ya]||1;\n if(attackFail(x,xa)){x.sta=cl(x.sta-staminaCost(x,xa),0,x.maxSta);return}\n let atk=eff(x,\"juk\")*.56+eff(x,\"nal\")*.20+x.mom*.16+eff(x,\"meo\")*.08;\n let def=eff(y,\"mat\")*.56+eff(y,\"nal\")*.24+eff(y,\"meo\")*.20;\n let raw=(7+(atk-def*.42)/11)*edge*(.86+Math.random()*.28)*damageModForSta(x);\n if(xa===\"brawl\")raw*=1.15;\n if(xa===\"counter\"&&ya===\"press\")raw*=1.18;\n if(xa===\"counter\"&&ya===\"brawl\"){\n   const timing = (x.nal*.50+x.meo*.38+x.sta*.12) - (y.juk*.38+y.nal*.22+y.mom*.18);\n   const success = cl(.42 + timing/170, .16, .76);\n   if(Math.random()<success){\n     raw*=1.12;\n     add(`<span class=\"good\">${x.name}이 난타가 시작되기 직전 타이밍을 잡았다.</span>`);\n   }else{\n     raw*=.18;\n     x.mom=cl(x.mom-7,0,100);\n     add(`<span class=\"hurt\">${x.name}의 받아치기가 늦었다. 정면승부를 그대로 허용할 위험이 커졌다.</span>`);\n   }\n }\n if(xa===\"counter\"&&![\"press\",\"brawl\",\"finish\"].includes(ya)){\n   raw*=.12;\n   x.mom=cl(x.mom-6,0,100);\n   add(`<span class=\"hurt\">${x.name}이 받아칠 순간을 기다렸지만 상대가 들어오지 않았다. 기세가 꺾인다.</span>`);\n }\n if(xa===\"counter\"&&x.counterStreak>=2){\n   const penalty=Math.min(.42,(x.counterStreak-1)*.14);\n   raw*=1-penalty;\n   x.mom=cl(x.mom-3*(x.counterStreak-1),0,100);\n   add(`<span class=\"hurt\">같은 받아치기를 반복하자 패턴이 읽히기 시작한다.</span>`);\n }\n if(xa===\"counter\"&&x.sta<=30)raw*=.72;\n if(xa===\"counter\"&&x.sta<=15)raw*=.72;\n if(xa===\"counter\")raw*=statusCounter(x);\n if(xa===\"finish\")raw*=1.52;\n\n if(xa===\"counter\"&&ya===\"press\"&&ct.counterVsPress)raw*=ct.counterVsPress;\n if(xa===\"press\"&&ya===\"endure\"&&ct.pressVsEndure)raw*=ct.pressVsEndure;\n if(xa===\"press\"&&ya===\"measure\"&&ct.pressVsMeasure)raw*=ct.pressVsMeasure;\n if(ya===\"brawl\"&&yct.brawlTaken)raw*=yct.brawlTaken;\n\n // 파고들기: 압박. 버티기/거리재기에 강하고 정타 시 다운 가능.\n if(xa===\"press\"&&ya===\"endure\")raw*=1.10;\n\n // 정면승부: 난타전. 내 피해도 감수한다.\n if(xa===\"brawl\"){\n   raw*=1.12;\n   let ret=cl(2.5+((eff(y,\"juk\")*.40+eff(y,\"mat\")*.18+y.mom*.10)-(eff(x,\"mat\")*.26+eff(x,\"nal\")*.12))/17,0,15)*(.82+Math.random()*.30);\n   if(ya===\"measure\"||ya===\"endure\")ret*=.45;\n   if(ya===\"counter\")ret*=1.10;\n   if(ret>=2.5){x.hp=cl(x.hp-ret,0,x.maxHp);add(`<span class=\"hurt\">${x.name}도 난타전 속에서 체력 -${Math.round(ret)}</span>`);maybeKnock(y,x,ret,ya);if(x.hp<=0){finishFight(y,x,\"난타전 KO\");return}}\n }\n\n // 거리재기 중 회피 보정\n if(ya===\"measure\"){\n   let evade=.12+(y.nal-x.nal)*.003+(yct.measureEvade||0);\n   if(xa===\"press\")evade-=.13;\n   if(Math.random()<cl(evade,.02,.45)){\n     add(`<span class=\"turn\">${F.turn}턴</span> ${y.name}이 거리를 벌리며 공격을 흘렸다.`, \"info\");\n     return;\n   }\n }\n\n // 버티기 피해 감소\n if(ya===\"endure\"){\n   let reduce=.24+(yct.endureReduce||0);\n   raw*=1-reduce;\n }\n\n // 분석 예측 적중 보너스\n if(x.pred&&x.pred.level===3&&x.pred.act===ya){\n   const bonus=(xa===\"counter\"&&[\"press\",\"brawl\"].includes(ya))?1.32:1.18;\n   raw*=bonus;\n   add(`<span class=\"good\">완벽하게 읽었다.</span>`);\n   x.pred=null;\n }\n\n raw=cl(raw,1,29);\n y.hp=cl(y.hp-raw,0,y.maxHp);\n\n let momDamage=raw*.40;\n if(xa===\"press\"&&ya===\"endure\"&&ct.vsEndureMom)momDamage+=ct.vsEndureMom;\n if(xa===\"brawl\"&&ya===\"brawl\"&&ct.vsBrawlMom)momDamage+=ct.vsBrawlMom;\n\n x.mom=cl(x.mom+raw*.22,0,100);\n y.mom=cl(y.mom-momDamage,0,100);\n\n add(`<span class=\"turn\">${F.turn}턴</span> <b>${x.name}</b> — ${ACT[xa].n}. <span class=\"hurt\">${y.name} 체력 -${Math.round(raw)}</span>`);\n\n maybeKnock(x,y,raw,xa);\n if(y.hp<=0)finishFight(x,y,\"KO\");\n}\n\nfunction maybeKnock(attacker,target,damage,type){\n let yct=COMBAT_TRAITS[target.combatTrait]||{};\n let missingPct=1-target.hp/target.maxHp; let base=(damage-11)*.027+(missingPct*100)*.0022+(FLAWS[target.flaw]?.down||0)-(eff(target,\"mat\")-50)*.002-(yct.downResist||0);\n if(type===\"counter\")base+=.07;if(type===\"brawl\")base+=.04;if(type===\"press\"&&damage>=17)base+=.03;\n if(damage>=10&&Math.random()<cl(base,.015,.66))down(attacker,target,damage,type);\n}\nfunction statusFromHit(type,damage){\n let pool=type===\"counter\"?[\"그로기\",\"시야 흐림\",\"다리가 풀림\",\"그로기\"]:\n          type===\"press\"?[\"다리가 풀림\",\"숨이 참\",\"그로기\",\"겁을 먹음\"]:\n          [\"숨이 참\",\"주먹이 저림\",\"그로기\",\"다리가 풀림\"];\n if(damage>=22)pool.push(\"그로기\",\"시야 흐림\");return pick(pool);\n}\nfunction down(attacker,y,damage,type){\n y.downs++;add(`<span class=\"big\">${y.name} 다운!</span>`);\n let grit=eff(y,\"mat\")+(y.pers===\"독종\"?12:0)+(y.trait===\"악바리\"?12:0)+ri(-15,15);\n if(grit<38||y.hp<12){y.hp=0;return}\n y.mom=cl(y.mom-14,0,momCap(y));\n let stChance=.28+Math.max(0,y.downs-1)*.22+Math.max(0,damage-14)*.018-(y.trait===\"강골\"?.10:0);\n if(Math.random()<cl(stChance,.10,.88))addStatus(y,statusFromHit(type,damage));\n let inj=.05+Math.max(0,y.downs-1)*.07+Math.max(0,damage-18)*.015;\n if(Math.random()<cl(inj,.03,.28)){\n   let flag=type===\"counter\"?pick([\"눈\",\"머리\",\"다리\"]):type===\"press\"?pick([\"다리\",\"갈비\",\"머리\"]):pick([\"손\",\"갈비\",\"허리\",\"머리\"]);\n   y.injuryFlags.push(flag);add(`<span class=\"hurt\">${y.name}에게 큰 충격이 누적됐다. (${flag})</span>`);\n }\n add(`${y.name}이 이를 악물고 다시 일어선다.`);\n}\nfunction postInjury(x){\n let out=[];for(const flag of [...new Set(x.injuryFlags||[])]){\n   if(Math.random()>.22+x.downs*.05)continue;\n   if(flag===\"눈\")out.push(\"한쪽 눈의 시야 손상\");\n   else if(flag===\"다리\")out.push(Math.random()<.35?\"절뚝거림\":\"약한 무릎\");\n   else if(flag===\"손\")out.push(\"주먹 후유증\");\n   else if(flag===\"허리\")out.push(\"고질적인 허리 통증\");\n   else if(flag===\"갈비\")out.push(\"호흡 후유증\");\n   else if(flag===\"머리\")out.push(\"만성 어지럼\");\n }return out;\n}\n\nfunction updateFinisher(){\n if(!F||F.over)return;\n document.getElementById(\"finishBtn\").disabled=!(F.a.sta>=22&&(F.a.mom>=68||F.b.hp<=30||F.a.hp<=24));\n}\n\nfunction checkEnd(){\n if(F.over)return;\n if(F.a.hp<=0)return finishFight(F.b,F.a,\"KO\");\n if(F.b.hp<=0)return finishFight(F.a,F.b,\"KO\");\n if(F.turn>=15){\n   let sa=F.a.hp+F.a.mom*.35+F.a.sta*.12, sb=F.b.hp+F.b.mom*.35+F.b.sta*.12;\n   let w=sa>sb?F.a:F.b;\n   return finishFight(w,w===F.a?F.b:F.a,\"주변에서 말림\");\n }\n}\n\nfunction finishFight(w,l,why){\n if(F.over)return;\n F.over=true;\n add(`<span class=\"big\">끝났다. ${w.name} 승리 — ${why}.</span>`);\n let r=document.getElementById(\"result\");\n r.style.display=\"block\";\n let ia=postInjury(F.a),ib=postInjury(F.b),it=\"\";\n if(ia.length)it+=`<br>${me.name} 후유증 후보: <span class=\"hurt\">${ia.join(\", \")}</span>`;\n if(ib.length)it+=`<br>${en.name} 후유증 후보: <span class=\"hurt\">${ib.join(\", \")}</span>`;\n r.innerHTML=`<b>맞장 결과</b><br>${w.name} 승 · ${F.turn}턴<br>다운 ${me.name} ${F.a.downs}회 / ${en.name} ${F.b.downs}회<br>남은 체력 ${me.name} ${Math.round(F.a.hp)}/${F.a.maxHp}<br>남은 스태미너 ${me.name} ${Math.round(F.a.sta)}/${F.a.maxSta}${it}<br><small>이 결과는 패싸움으로 그대로 이어집니다.</small>`;\n document.querySelectorAll(\".actions button\").forEach(b=>b.disabled=true);\n\n if(window.parent!==window){\n   window.parent.postMessage({\n     type:\"duelResult\",\n     win:(w===F.a),\n     reason:why,\n     ko:(why===\"KO\"||why===\"난타전 KO\"),\n     stopped:(why===\"주변에서 말림\"),\n     turns:F.turn,\n     playerHp:Math.round(F.a.hp),\n     playerMaxHp:Math.round(F.a.maxHp),\n     playerSta:Math.round(F.a.sta),\n     playerMaxSta:Math.round(F.a.maxSta),\n     playerStatuses:F.a.statuses.map(s=>s.name),\n     enemyHp:Math.round(F.b.hp),\n     enemyMaxHp:Math.round(F.b.maxHp),\n     playerDowns:F.a.downs,\n     enemyDowns:F.b.downs,\n     playerInjuries:ia,\n     enemyInjuries:ib\n   },\"*\");\n }\n}\n\nfunction add(t,c=\"\"){\n let d=document.createElement(\"div\");\n d.className=\"entry \"+c;\n d.innerHTML=t;\n document.getElementById(\"log\").appendChild(d);\n document.getElementById(\"log\").scrollTop=document.getElementById(\"log\").scrollHeight;\n}\n\nfunction init(){\n for(const [id,obj] of [[\"pers\",PERS],[\"trait\",BASE_TRAITS],[\"combatTrait\",COMBAT_TRAITS],[\"flaw\",FLAWS]]){\n   let s=document.getElementById(id);\n   Object.keys(obj).forEach(k=>s.add(new Option(k,k)));\n }\n pers.value=\"과묵한 승부사\";\n trait.value=\"강심장\";\n combatTrait.value=\"카운터 타격가\";\n flaw.value=\"없음\";\n reroll();enemy();render();\n}\ninit();\nfunction startGangPayload(d){\n if(!d)return;\n me={\n   name:d.player?.name||\"나\",alias:\"\",\n   pers:d.player?.pers||\"과묵한 승부사\",\n   trait:d.player?.trait||\"강심장\",\n   combatTrait:d.player?.combatTrait||\"카운터 타격가\",\n   flaw:d.player?.flaw||\"없음\",\n   juk:d.player?.juk??45,mat:d.player?.mat??45,nal:d.player?.nal??45,meo:d.player?.meo??45,\n   vit:d.player?.vit??45,end:d.player?.end??45\n };\n en={\n   name:d.enemy?.name||\"상대 조직원\",alias:\"\",\n   pers:d.enemy?.pers||\"직선파\",\n   trait:d.enemy?.trait||\"보통 체격\",\n   combatTrait:d.enemy?.combatTrait||\"난타전 체질\",\n   flaw:d.enemy?.flaw||\"없음\",\n   juk:d.enemy?.juk??50,mat:d.enemy?.mat??50,nal:d.enemy?.nal??48,meo:d.enemy?.meo??45,\n   vit:d.enemy?.vit??50,end:d.enemy?.end??50\n };\n render(); startFight();\n if(F&&F.a){\n   F.a.hp=Math.max(1,Math.min(F.a.maxHp,Number(d.player?.hp ?? F.a.maxHp)));\n   F.a.sta=Math.max(0,Math.min(F.a.maxSta,Number(d.player?.sta ?? F.a.maxSta)));\n   if(Array.isArray(d.player?.statuses)){\n     d.player.statuses.forEach(n=>{ if(TEMP_STATUS[n]) addStatus(F.a,n); });\n   }\n   render();\n   add(`<span class=\"hurt\">패싸움에서 이어진 상태 — 체력 ${Math.round(F.a.hp)}/${F.a.maxHp} · 스태미너 ${Math.round(F.a.sta)}/${F.a.maxSta}</span>`);\n }\n}\nwindow.addEventListener(\"message\",(ev)=>{\n if(!ev.data||ev.data.type!==\"startGangDuel\")return;\n startGangPayload(ev.data);\n});\n<\\/script>\n</body>\n</html>";
+const RANKS={
+ grunt:{name:"말단 조직원",desc:"내 주변 사건을 직접 겪습니다. 전체 승패보다 생존·활약·명성이 중요합니다."},
+ leader:{name:"조장",desc:"내 조원들의 상태와 국지 상황을 판단합니다. 부하를 살리고 명령을 수행하는 것이 중요합니다."},
+ officer:{name:"간부",desc:"여러 조의 위기와 기회를 동시에 봅니다. 어느 문제를 버릴지 결정해야 합니다."},
+ boss:{name:"두목",desc:"전체 조직과 간부를 지휘합니다. 예비대·퇴각·경찰·지역 관계까지 판단합니다."}
+};
+const PERS=["불같은 성미","과묵한 승부사","의리파","냉정한 현실주의자","야심가","능글맞은 책략가","직선파","자존심 강함","겁 없는 돌격파","신중한 관망자","호인","독종"];
+const TRAITS=["카운터 타격가","압박의 달인","난타전 체질","거리 싸움꾼","집요한 추격자","철벽","숨이 길다","폭발적인 체력","몸싸움 장인"];
+const ZN=["입구","중앙","골목"];
+let G=null,rank="grunt",timer=null,ACTIVE=null,AUTO_TIMER=null;
+
+const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[ri(0,a.length-1)];
+const cl=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+function mkPerson(d,i){
+ let j=+d[3]||55,t=+d[2]||50,m=+d[4]||50;
+ return{id:i,name:d[0],juk:j,mat:Math.round(j*.78+t*.22),nal:Math.round(j*.42+m*.26+22),tong:t,meo:m,pers:pick(PERS),trait:pick(TRAITS),hp:100,status:"정상",zone:ri(0,2),loyal:ri(45,82),friend:null};
+}
+function syncContext(){
+ if(!G)return;
+ G.police=+policeSel.value;G.local=+localSel.value;G.influence=+influenceSel.value;
+ render();
+}
+function newBattle(){
+ if(timer)clearInterval(timer);if(AUTO_TIMER)clearInterval(AUTO_TIMER);
+ let ps=[...PEOPLE].sort(()=>Math.random()-.5).slice(0,12).map(mkPerson);
+ ps.forEach((p,i)=>p.friend=ps[(i+1)%ps.length].id);
+ const pstats={juk:46,mat:45,nal:44,vit:47,end:46,meo:45};
+ const maxHp=60+pstats.vit, maxSta=60+pstats.end;
+ G={run:false,end:false,playerOut:false,t:0,front:0,our:52,enemy:55,morO:68,morE:68,playerZone:1,
+ hp:maxHp,maxHp,sta:maxSta,maxSta,stats:pstats,rep:0,cmd:rank==="grunt"?0:rank==="leader"?2:rank==="officer"?4:6,reserve:12,police:+policeSel.value,local:+localSel.value,influence:+influenceSel.value,people:ps,zones:[
+  {our:17,enemy:18,p:0,terrain:"좁은 출입구"},
+  {our:20,enemy:21,p:0,terrain:"넓은 주차장"},
+  {our:15,enemy:16,p:0,terrain:"차량 사이 골목"}
+ ],cool:0,history:[],playerStatuses:[],personal:{kos:0,duelWins:0,duelLosses:0,rescues:0,injuries:[]},battleStart:{our:52,enemy:55}};
+ ACTIVE=null;log.innerHTML="";autoLog.innerHTML="";resultPanel.style.display="none";autoBox.style.display="none";finalBox.style.display="none";runBtn.textContent="전투 시작";
+ add("양쪽 조직이 충돌했다. 아직 누구도 판을 잡지 못했다.","big");render();
+}
+function setRank(r,e){
+ rank=r;document.querySelectorAll(".rankbar button").forEach(x=>x.classList.remove("active"));e.classList.add("active");
+ if(G){G.cmd=r==="grunt"?0:r==="leader"?2:r==="officer"?4:6;ACTIVE=null;add("시점 변경: "+RANKS[r].name,"info");render()}
+}
+function toggleRun(){
+ if(!G||G.end||G.playerOut)return;
+ G.run=!G.run;runBtn.textContent=G.run?"일시정지":"계속";
+ if(G.run){clearInterval(timer);timer=setInterval(tick,1050)}else clearInterval(timer);
+}
+function battleTick(auto=false){
+ G.t+=ri(18,30);
+ G.zones.forEach((z,i)=>{
+   let locals=G.people.filter(p=>p.zone===i&&p.hp>0).reduce((s,p)=>s+p.juk*.01+p.tong*.006,0);
+   let influence=(G.influence/40)*1.2;
+   z.p=cl(z.p+((z.our-z.enemy)*.52+locals+influence+ri(-6,6))*.22,-100,100);
+   if(z.p>55&&Math.random()<.13){z.enemy=Math.max(0,z.enemy-1);G.enemy=Math.max(0,G.enemy-1)}
+   if(z.p<-55&&Math.random()<.13){z.our=Math.max(0,z.our-1);G.our=Math.max(0,G.our-1)}
+ });
+ G.front=G.zones.reduce((s,z)=>s+z.p,0)/3;
+ if(G.front>35){G.morO=cl(G.morO+.35,0,100);G.morE=cl(G.morE-.45,0,100)}
+ if(G.front<-35){G.morE=cl(G.morE+.35,0,100);G.morO=cl(G.morO-.45,0,100)}
+ if(auto&&Math.random()<.35){
+   let z=pick(G.zones),msg=z.p>30?"아군이 한 구역을 밀어붙인다.":z.p<-30?"아군 한 구역이 크게 흔들린다.":"양쪽이 다시 뒤엉킨다.";
+   autoAdd(msg);
+ }
+}
+function tick(){
+ if(!G||G.end||G.playerOut)return;
+ battleTick(false);
+ if(G.cool>0)G.cool--;
+ if(!ACTIVE&&G.cool<=0&&Math.random()<.62)generateEvent();
+ if(ACTIVE){ACTIVE.age++;if(ACTIVE.age>ACTIVE.timeout)expireEvent()}
+ endCheck();render();
+}
+function commonRareEvents(){
+ let arr=[];
+ let policeChance=G.police<0?3:G.police>0?1:2;
+ for(let i=0;i<policeChance;i++)arr.push(ev("policeContact","경찰 움직임이 평소와 다르다","근처 순찰차가 이쪽을 의식하고 있다는 연락이 들어왔다.",["즉시 몸을 낮춘다","조금만 더 버틴다","무시한다"],"희귀"));
+ if(G.local>15){
+   arr.push(ev("localHelp","동네 사람이 퇴로를 알려준다","평소 얼굴을 익혀둔 상인이 뒷문을 열어주며 안전한 길을 알려준다.",["부상자부터 뺀다","퇴로만 확보한다","지금은 밀어붙인다"],"희귀"));
+ }
+ if(G.local<-15){
+   arr.push(ev("localHostile","주민 신고가 빠르다","주변 가게들이 문을 닫고 누군가 경찰에 신고하는 모습이 보인다.",["전투를 줄인다","퇴로를 바꾼다","신경 쓰지 않는다"],"희귀"));
+ }
+ if(G.influence>15){
+   arr.push(ev("homeSupport","우리 구역의 지원","근처에 있던 우리 쪽 사람들이 소식을 듣고 합류하려 한다.",["바로 합류시킨다","후방에 대기","부상자 후송에 쓴다"],"희귀"));
+ }
+ if(G.influence<-15){
+   arr.push(ev("enemyHome","상대 구역의 지형","상대가 골목과 출입구를 너무 잘 알고 있다. 우리 쪽 몇 명이 길을 잘못 들었다.",["고립 인원 구출","중앙으로 전원 집결","그대로 밀어붙인다"],"희귀"));
+ }
+ return arr;
+}
+function rankEvents(){
+ let a=[];
+ if(rank==="grunt")a=[
+  ev("duel","눈앞의 상대가 길을 막는다","상대 조직원 하나가 사람들 사이를 헤치고 당신에게 달려든다.",["맞선다","동료 쪽으로 빠진다"]),
+  ev("friendDown","친한 동료가 쓰러졌다","바로 옆에서 친한 동료가 정타를 맞고 쓰러졌다. 상대 둘이 달라붙는다.",["몸을 던져 구한다","눈앞 상대부터 막는다","사람을 불러 도움을 청한다"]),
+  ev("twoOnOne","둘에게 포위됐다","앞뒤에서 두 명이 동시에 붙었다.",["한 명을 붙잡고 맞장","차량 사이로 빠진다","주변 아군에게 소리친다"]),
+  ev("enemyRuns","맞던 상대가 도망친다","상대 하나가 전열 뒤로 달아난다. 따라가면 고립될 수 있다.",["끝까지 추격","그냥 둔다"]),
+  ev("officerAppears","상대 간부가 나타났다","이름 있는 상대 간부가 이쪽으로 걸어온다.",["직접 막아선다","조장을 부른다","자리를 피한다"]),
+  ev("allyBerserk","아군이 폭주한다","의리파 동료가 친구가 쓰러진 걸 보고 상대 깊숙이 혼자 들어간다.",["따라 들어간다","붙잡아 말린다","내 싸움에 집중한다"])
+ ];
+ else if(rank==="leader")a=[
+  ev("memberPanic","조원 하나가 겁을 먹었다","조원 한 명이 계속 뒤를 보며 전열에서 빠지려 한다.",["직접 붙잡고 독려","다른 조원과 교대","뒤로 보내고 5명으로 버틴다"]),
+  ev("memberInjured","조원 중상","조원 한 명이 제대로 걷지 못한다.",["둘을 붙여 후송","한 명만 붙여 후송","본인에게 버티라고 한다"]),
+  ev("gapOrder","상대 측면이 열렸다","내 조가 파고들면 상대 옆구리를 칠 수 있지만 현재 자리가 비게 된다.",["전원 돌파","절반만 보낸다","자리 유지"]),
+  ev("superiorOrder","상급자의 무리한 명령","간부가 지금 당장 중앙으로 밀어붙이라고 명령했다.",["명령대로 돌격","조금 늦춰 움직임","현장 판단으로 거부"]),
+  ev("rivalLeader","상대 조장과 마주쳤다","상대 조장이 당신을 알아보고 직접 앞으로 나온다.",["직접 맞장","조원 둘과 함께 압박","조원에게 맡기고 지휘 유지"]),
+  ev("isolatedMember","조원 둘이 고립됐다","측면에서 조원 둘이 상대에게 둘러싸였다.",["전원 구출","세 명만 지원","고립 구역 포기"])
+ ];
+ else if(rank==="officer")a=[
+  ev("leaderDown","조장 부상 보고","1조 조장이 쓰러졌다. 1조는 지휘자를 잃고 흔들리는 중이다.",["다른 조장을 이동 배치","내가 직접 간다","고참에게 임시 지휘"]),
+  ev("enemyOfficerBreak","적 간부 돌파","상대 행동대장이 중앙을 뚫고 있다.",["카운터 특화 장수 투입","조직원 6명으로 묶는다","전선을 뒤로 뺀다"]),
+  ev("twoCrises","동시 위기","입구는 붕괴 직전이고 골목에서는 적 간부가 고립됐다. 둘 다 잡기 어렵다.",["입구를 살린다","적 간부를 잡는다","병력을 나눠 둘 다 시도"]),
+  ev("insubordinate","조장의 명령 불복종","불같은 성미의 조장이 후퇴 명령을 무시하고 계속 전진한다.",["강제로 복귀","지원해 돌파로 전환","내버려둔다"]),
+  ev("reinforcementChoice","지원 인원 8명 도착","예상보다 빨리 지원이 왔다.",["무너지는 곳 보강","우세한 곳에 몰아 붕괴 유도","예비로 남긴다"]),
+  ev("duelRequest","적 간부의 도발","상대 간부가 공개적으로 우리 쪽 이름 있는 장수를 부른다.",["장수를 보낸다","내가 직접 나간다","무시한다"])
+ ];
+ else a=[
+  ev("officerConflict","간부 둘의 의견 충돌","한 간부는 밀어붙이자고 하고 다른 간부는 퇴로부터 확보하자고 한다.",["공세안 채택","안전안 채택","각자 판단"]),
+  ev("reserveDecision","예비대 투입 시점","예비 12명이 남아 있다. 지금 쓰면 판을 바꿀 수 있지만 후반 카드가 사라진다.",["중앙에 전부 투입","6명만 투입","끝까지 보존"]),
+  ev("bossSighted","상대 두목 위치 확인","상대 두목이 골목 쪽에서 직접 전열을 독려하고 있다는 보고가 들어왔다.",["정예 장수 둘을 보낸다","전체 압박으로 묶는다","함정일 수 있어 무시"]),
+  ev("retreatWindow","퇴각 창구가 열렸다","현재는 아직 질서 있게 물러날 수 있다.",["전면 퇴각","부상자부터 뺀다","계속 싸운다"]),
+  ev("famousDuel","유명 장수끼리 충돌","양쪽의 이름 있는 장수가 중앙에서 마주쳤다.",["일기토 허용","아군을 붙여 빨리 끝냄","장수를 빼고 전선 유지"]),
+  ev("betrayalRumor","배신 소문","한 간부가 일부러 지원을 늦추고 있다는 말이 돈다.",["즉시 추궁","전투 후 조사","다른 간부를 감시로 붙인다"])
+ ];
+ return a;
+}
+function ev(kind,title,desc,opts,rarity="일반"){return{kind,title,desc,opts,rarity,age:0,timeout:ri(4,7)}}
+function generateEvent(){
+ let pool=rankEvents();
+ if(Math.random()<.18)pool=pool.concat(commonRareEvents());
+ ACTIVE=pick(pool);
+ if(["duel","officerAppears","rivalLeader","duelRequest","famousDuel"].includes(ACTIVE.kind))ACTIVE.enemy=makeEnemy(ACTIVE.kind!=="duel");
+ G.cool=2;add("사건 발생: "+ACTIVE.title,"big");
+}
+function expireEvent(){if(!ACTIVE)return;showOutcome("망설이는 사이 상황이 흘러갔다.","대응이 늦어 주변 전황이 불리해졌다.",[{t:"전황",v:-6},{t:"사기",v:-2}]);G.zones[G.playerZone].p-=6;G.morO-=2;ACTIVE=null;G.cool=2}
+function chooseEvent(i){
+ if(!ACTIVE)return;
+ let e=ACTIVE;
+ if((e.kind==="duel"&&i===0)||(e.kind==="officerAppears"&&i===0)||(e.kind==="rivalLeader"&&i===0)||(e.kind==="duelRequest"&&i===1)){
+   startDuel(e,e.enemy||makeEnemy(true));return;
+ }
+ let outcome=resolveEvent(e,i);
+ showOutcome(outcome.title,outcome.narrative,outcome.changes);
+ ACTIVE=null;G.cool=2;render();
+}
+
+function resolveEvent(e,i){
+ let d=0,m=0,rep=0,hp=0,rel=0,pol=0,loc=0,inf=0,narr="",title="결과";
+ switch(e.kind){
+  case"friendDown":
+   if(i===0){d=9;rep=5;hp=-ri(3,9);G.personal.rescues++;narr="상대 둘 사이로 몸을 던졌다. 한 명의 팔을 밀쳐낸 뒤 쓰러진 동료의 어깨를 잡아 뒤로 끌어냈다. 옆구리에 한 대를 맞았지만 구조에는 성공했다."}
+   else if(i===1){d=-4;narr="눈앞 상대부터 막아냈지만 쓰러진 동료 쪽에는 상대가 더 붙었다. 당신은 버텼지만 동료는 결국 전투에서 이탈했다."}
+   else{d=4;rep=1;narr="주변에 크게 소리쳐 사람을 불렀다. 두 명이 달려와 쓰러진 동료를 빼냈고, 당신은 앞을 막아 시간을 벌었다."}break;
+  case"twoOnOne":
+   if(i===0){d=Math.random()<.55?7:-8;hp=d>0?-6:-14;narr=d>0?"둘 중 앞선 한 명을 붙잡아 싸움을 1:1처럼 만들었다. 다른 한 명이 들어오기 전에 먼저 밀어냈다.":"한 명에게 집중하는 사이 뒤쪽 공격을 허용했다. 균형을 잃고 크게 밀렸다."}
+   else if(i===1){d=5;narr="차량 사이 좁은 틈으로 빠지며 둘이 동시에 달려들 공간을 없앴다. 숫자 열세를 지형으로 상쇄했다."}
+   else{d=4;rel=2;narr="아군 이름을 크게 불렀다. 가까이 있던 동료가 합류하면서 2대1 상황이 깨졌다."}break;
+  case"enemyRuns":
+   if(i===0){d=Math.random()<.55?8:-9;narr=d>0?"달아나는 상대를 끝까지 물고 늘어져 전열 뒤까지 밀어냈다. 주변 적들이 잠깐 주춤했다.":"너무 깊이 추격했다. 돌아보니 아군과 거리가 벌어져 오히려 포위될 뻔했다."}
+   else{d=1;narr="도망가는 상대를 보내주고 자리를 지켰다. 큰 활약은 없었지만 전열은 흐트러지지 않았다."}break;
+  case"allyBerserk":
+   if(i===0){d=Math.random()<.5?10:-10;hp=d>0?-5:-12;narr=d>0?"폭주한 동료를 따라 깊이 파고들었다. 둘이 동시에 밀어붙이자 상대가 당황하며 물러났다.":"동료를 따라 너무 깊이 들어갔다. 주변 지원이 끊기며 둘 다 큰 압박을 받았다."}
+   else if(i===1){d=6;rel=4;narr="동료의 팔을 붙잡아 억지로 멈춰 세웠다. 화는 냈지만 포위될 상황은 피했다."}
+   else{d=-3;narr="내 싸움에 집중했다. 폭주한 동료는 더 깊이 들어가 결국 주변에서 모습이 보이지 않게 됐다."}break;
+  case"memberPanic":
+   if(i===0){d=8;rel=3;narr="겁먹은 조원의 어깨를 잡고 눈을 맞췄다. 당신이 바로 옆에서 버티겠다고 하자 조원이 다시 자리를 잡았다."}
+   else if(i===1){d=5;narr="겁먹은 조원을 뒤로 빼고 비교적 침착한 조원과 자리를 바꿨다. 전열은 유지됐지만 교대에 시간이 들었다."}
+   else{d=1;narr="겁먹은 조원을 뒤로 보냈다. 남은 다섯 명이 자리를 지켰지만 숫자 부담이 커졌다."}break;
+  case"memberInjured":
+   if(i===0){d=2;rel=4;narr="조원 둘을 붙여 부상자를 확실히 후송했다. 당장은 인원이 줄었지만 추가 부상은 막았다."}
+   else if(i===1){d=0;narr="한 명만 후송에 붙였다. 전열 손실은 줄었지만 후송 속도는 느렸다."}
+   else{d=-7;rel=-3;narr="버티라고 지시했다. 부상자는 결국 다시 쓰러졌고 주변 조원들의 표정이 굳었다."}break;
+  case"gapOrder":
+   if(i===0){d=Math.random()<.58?15:-13;narr=d>0?"조원 전원을 이끌고 틈으로 밀어붙였다. 상대 측면이 한꺼번에 흔들리며 큰 공간이 열렸다.":"전원 돌파를 시도했지만 상대가 틈을 미끼로 쓴 듯했다. 자리를 비운 사이 뒤쪽까지 흔들렸다."}
+   else if(i===1){d=7;narr="절반만 틈으로 보내고 나머지는 자리를 지켰다. 돌파는 작았지만 위험도 줄였다."}
+   else{d=0;narr="기회를 포기하고 자리를 지켰다. 안전했지만 상대는 금세 전열을 복구했다."}break;
+  case"superiorOrder":
+   if(i===0){d=Math.random()<.48?10:-12;narr=d>0?"상급자 명령대로 즉시 돌격했다. 예상보다 상대가 흔들려 그대로 밀어붙이는 데 성공했다.":"명령대로 달려들었지만 현장 상황이 좋지 않았다. 조원들이 맞부딪치며 크게 밀렸다."}
+   else if(i===1){d=4;rep=-1;narr="명령을 완전히 거부하지는 않았다. 몇 초 늦춰 상대 움직임을 확인한 뒤 전진해 피해를 줄였다."}
+   else{d=2;rep=-4;narr="현장 판단으로 명령을 거부했다. 조원들은 살았지만 상급자가 당신을 노려봤다."}break;
+  case"isolatedMember":
+   if(i===0){d=8;rel=5;narr="조 전원을 돌려 고립된 둘을 빼냈다. 순간 전선은 느슨해졌지만 조원들의 신뢰는 크게 올랐다."}
+   else if(i===1){d=4;rel=2;narr="세 명만 지원으로 보내 고립된 둘을 겨우 끌어냈다. 본대도 완전히 비우지 않았다."}
+   else{d=-10;rel=-6;narr="고립된 둘을 포기했다. 전선은 유지됐지만 조원들은 그 결정을 똑똑히 봤다."}break;
+  case"leaderDown":
+   if(i===0){d=9;narr="다른 조장을 즉시 이동시켜 빈 지휘 자리를 메웠다. 전열이 빠르게 안정됐다."}
+   else if(i===1){d=12;G.cmd=Math.max(0,G.cmd-1);narr="직접 1조 쪽으로 뛰어갔다. 당신이 나타나자 흔들리던 인원들이 다시 모였다."}
+   else{d=4;narr="가장 고참인 조원에게 임시 지휘를 맡겼다. 완벽하진 않았지만 붕괴는 막았다."}break;
+  case"enemyOfficerBreak":
+   if(i===0){d=13;G.cmd=Math.max(0,G.cmd-2);narr="카운터에 강한 장수를 정확히 상대 행동대장 쪽에 붙였다. 돌파가 멈추고 오히려 상대가 주춤했다."}
+   else if(i===1){d=7;G.cmd=Math.max(0,G.cmd-1);narr="조직원 여섯 명을 붙여 상대 행동대장의 움직임을 묶었다. 완전히 제압하진 못했지만 전진을 늦췄다."}
+   else{d=-4;narr="전선을 뒤로 물려 충격을 흡수했다. 큰 피해는 피했지만 공간을 내줬다."}break;
+  case"twoCrises":
+   if(i===0){d=8;narr="입구를 살리는 데 자원을 집중했다. 적 간부는 놓쳤지만 붕괴 직전의 전열을 복구했다."}
+   else if(i===1){d=10;narr="입구 손실을 감수하고 고립된 적 간부를 노렸다. 핵심 인물을 밀어내며 상대 사기가 크게 흔들렸다."}
+   else{d=Math.random()<.45?12:-14;narr=d>0?"병력을 둘로 나눈 도박이 통했다. 두 곳 모두 최소한의 성과를 냈다.":"병력을 나눴다가 어느 쪽도 충분히 막지 못했다. 두 구역이 동시에 흔들렸다."}break;
+  case"insubordinate":
+   if(i===0){d=3;narr="명령 불복종한 조장을 강제로 불러들였다. 전열은 정리됐지만 돌파 기회는 사라졌다."}
+   else if(i===1){d=Math.random()<.55?14:-12;narr=d>0?"이미 나간 조장을 되돌리는 대신 지원을 붙였다. 무모함이 뜻밖의 돌파로 이어졌다.":"지원까지 붙였지만 돌격은 무모했다. 피해만 커졌다."}
+   else{d=-5;narr="내버려뒀다. 조장은 더 깊이 들어갔고 지휘 체계가 흔들렸다."}break;
+  case"reinforcementChoice":
+   if(i===0){d=8;narr="지원 인원을 가장 위험한 구역에 붙였다. 무너지던 전열이 다시 버티기 시작했다."}
+   else if(i===1){d=12;narr="우세한 구역에 지원을 몰아넣어 확실한 붕괴를 만들었다. 상대 일부가 등을 보이기 시작했다."}
+   else{d=2;G.reserve+=8;narr="지원 인원을 바로 쓰지 않고 예비로 남겼다. 당장 전황 변화는 작지만 후반 선택지가 늘었다."}break;
+  case"officerConflict":
+   if(i===0){d=Math.random()<.55?10:-9;narr=d>0?"공세안을 채택했다. 간부들이 한 방향으로 움직이자 상대가 압박을 견디지 못했다.":"공세를 택했지만 상대가 버텼다. 퇴로를 미리 잡지 않은 대가가 컸다."}
+   else if(i===1){d=5;narr="안전안을 채택해 퇴로와 부상자 후송선을 먼저 정리했다. 큰 돌파는 없지만 피해가 줄었다."}
+   else{d=Math.random()<.45?8:-10;narr=d>0?"각자 판단에 맡겼는데 의외로 현장 간부들이 서로 보완했다.":"각자 판단에 맡기자 명령이 엇갈리며 전열이 혼란스러워졌다."}break;
+  case"reserveDecision":
+   if(i===0&&G.reserve>=12){d=14;G.reserve-=12;narr="예비대를 중앙에 전부 쏟아부었다. 순간적인 숫자 우위가 생기며 전황이 크게 움직였다."}
+   else if(i===1&&G.reserve>=6){d=8;G.reserve-=6;narr="예비 절반만 투입했다. 전황을 조금 끌어올리면서 후반 자원도 남겼다."}
+   else{d=1;narr="예비대를 끝까지 아꼈다. 당장은 아무 변화가 없지만 후반 대응 여지는 남았다."}break;
+  case"bossSighted":
+   if(i===0){d=Math.random()<.58?18:-15;narr=d>0?"정예 둘을 보내 상대 두목 주변을 강하게 압박했다. 상대 지휘가 흔들리며 전체 전열까지 동요했다.":"상대 두목을 노린 정예들이 오히려 깊이 고립됐다. 전황이 크게 악화됐다."}
+   else if(i===1){d=8;narr="상대 두목 개인을 노리지 않고 주변 전열 전체를 압박했다. 두목이 움직일 공간이 줄었다."}
+   else{d=0;narr="함정 가능성을 의심해 무시했다. 상대 두목은 계속 현장을 독려했지만 우리 지휘 체계는 흔들리지 않았다."}break;
+  case"retreatWindow":
+   if(i===0){narr="질서 있는 퇴각을 명령했다. 조직원들이 부상자를 챙기며 빠져나가기 시작했다.";showOutcome(title,narr,[{t:"전투",v:"퇴각"}]);setTimeout(()=>finish(false,"질서 있는 퇴각"),500);return{title,narrative:narr,changes:[]}}
+   else if(i===1){d=-2;narr="부상자부터 먼저 빼고 남은 인원으로 전선을 잠깐 더 유지했다. 손실을 줄이면서도 시간을 벌었다."}
+   else{d=Math.random()<.5?9:-12;narr=d>0?"계속 싸운 선택이 통했다. 상대가 먼저 지치며 물러났다.":"퇴각 기회를 놓친 뒤 상대 압박이 더 세졌다. 부상자가 급격히 늘었다."}break;
+  case"famousDuel":
+   if(i===0){d=Math.random()<.55?14:-12;narr=d>0?"양쪽 장수가 맞붙었고 우리 장수가 이겼다. 주변 사기가 단숨에 올랐다.":"우리 장수가 일기토에서 밀렸다. 주변 인원들이 눈에 띄게 흔들렸다."}
+   else if(i===1){d=7;narr="일기토 분위기가 만들어지기 전에 아군을 붙여 빠르게 압박했다. 낭만은 없었지만 전술적으로는 안전했다."}
+   else{d=1;narr="장수를 빼고 전선 유지에 집중했다. 큰 사건은 피했지만 상대 사기도 꺾지 못했다."}break;
+  case"betrayalRumor":
+   if(i===0){d=-5;narr="전투 중간에 간부를 불러 추궁했다. 배신 여부는 확인하지 못했고 지휘 공백만 생겼다."}
+   else if(i===1){d=0;narr="전투 후 조사하기로 하고 일단 넘어갔다. 당장은 전황을 지키는 데 집중했다."}
+   else{d=3;narr="다른 간부를 감시로 붙였다. 직접 충돌은 피하면서도 이상 행동을 견제했다."}break;
+  case"policeContact":
+   if(i===0){d=-1;pol=2;narr="전열을 조금 낮추고 소란을 줄였다. 싸움의 기세는 약간 꺾였지만 경찰의 직접 개입 가능성은 낮췄다."}
+   else if(i===1){d=4;pol=-2;narr="몇 분만 더 버티기로 했다. 상대를 조금 밀어냈지만 경찰 쪽 시선은 더 나빠졌다."}
+   else{d=Math.random()<.45?5:-8;pol=-5;narr=d>0?"경찰 움직임을 무시하고 밀어붙였다. 당장은 상대가 밀렸다.":"경찰 움직임을 무시한 대가로 외곽이 크게 흔들렸다. 철수 압박까지 생겼다."}break;
+  case"localHelp":
+   if(i===0){loc=2;d=2;narr="상인이 열어준 뒷문으로 부상자를 먼저 뺐다. 전열은 조금 약해졌지만 추가 손실을 줄였다."}
+   else if(i===1){loc=1;d=3;narr="퇴로 위치만 확인하고 전투는 계속했다. 필요할 때 빠질 안전장치를 하나 확보했다."}
+   else{d=5;loc=-1;narr="도움을 거절하고 계속 밀어붙였다. 전황은 좋아졌지만 주민은 실망한 표정이었다."}break;
+  case"localHostile":
+   if(i===0){d=-2;loc=1;narr="주민 피해를 줄이기 위해 전투 강도를 낮췄다. 전황은 조금 손해 봤지만 적대감은 완화됐다."}
+   else if(i===1){d=1;narr="골목을 바꿔 퇴로를 다시 잡았다. 신고는 피할 수 없지만 고립 위험은 줄었다."}
+   else{d=4;loc=-4;pol=-2;narr="주민 반응을 무시하고 싸움을 이어갔다. 당장 상대는 밀렸지만 지역 분위기는 급격히 나빠졌다."}break;
+  case"homeSupport":
+   if(i===0){d=8;inf=2;narr="우리 구역 사람들이 바로 전열에 합류했다. 숫자 우위가 생기며 상대가 뒤로 밀렸다."}
+   else if(i===1){G.reserve+=4;inf=1;narr="지원 인원을 후방에 대기시켰다. 당장 전황은 그대로지만 예비 자원이 늘었다."}
+   else{loc=1;inf=1;narr="지원 인원을 부상자 후송에 붙였다. 주민 피해와 부상자 방치가 줄었다."}break;
+  case"enemyHome":
+   if(i===0){d=5;narr="길을 잘못 든 인원들을 우선 구출했다. 돌파는 늦어졌지만 고립 피해를 막았다."}
+   else if(i===1){d=3;narr="모든 인원을 중앙으로 집결시켜 지형 열세를 줄였다. 대신 측면 공간을 내줬다."}
+   else{d=Math.random()<.35?8:-12;narr=d>0?"상대 구역에서도 그대로 밀어붙인 도박이 통했다.":"지형을 무시하고 밀어붙이다가 골목에서 인원이 갈라졌다. 큰 손해를 봤다."}break;
+  default:d=ri(-3,5);narr="짧은 충돌 끝에 상황이 조금 바뀌었다.";
+ }
+ G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p+d,-100,100);G.morO=cl(G.morO+m+(d>0?1:d<0?-1:0),0,100);G.rep+=rep;G.hp=cl(G.hp+hp,0,G.maxHp);G.police=cl(G.police+pol,-100,100);G.local=cl(G.local+loc,-100,100);G.influence=cl(G.influence+inf,-100,100);
+ let changes=[];if(d)changes.push({t:"전황",v:(d>0?"+":"")+d});if(rep)changes.push({t:"명성",v:(rep>0?"+":"")+rep});if(hp)changes.push({t:"체력",v:hp});if(rel)changes.push({t:"관계",v:(rel>0?"+":"")+rel});if(pol)changes.push({t:"경찰 관계",v:(pol>0?"+":"")+pol});if(loc)changes.push({t:"지역 우호도",v:(loc>0?"+":"")+loc});if(inf)changes.push({t:"영향력",v:(inf>0?"+":"")+inf});
+ return{title,narrative:narr,changes};
+}
+function showOutcome(title,narrative,changes){
+ resultPanel.style.display="block";
+ resultPanel.innerHTML='<b>'+title+'</b><div class="resultNarrative">'+narrative+'</div><div class="changes">'+(changes.length?changes.map(c=>'<span>'+c.t+' '+c.v+'</span>').join(""):'<span>큰 수치 변화 없음</span>')+'</div>';
+ add(narrative,changes.some(c=>String(c.v).startsWith("-"))?"bad":"good");
+}
+function makeEnemy(officer=false){
+ return{name:officer?"상대 간부 "+pick(["박태수","장민호","오세진","권영철"]):"상대 조직원",pers:pick(PERS),trait:"보통 체격",combatTrait:pick(TRAITS),flaw:"없음",juk:officer?ri(58,75):ri(43,60),mat:officer?ri(55,73):ri(42,58),nal:officer?ri(50,70):ri(40,58),meo:officer?ri(50,68):ri(40,58),
+ vit:officer?ri(52,70):ri(42,60),end:officer?ri(50,70):ri(42,60)}
+}
+function startDuel(e,enemy){
+ if(timer){clearInterval(timer);timer=null;G.run=false;runBtn.textContent="계속"}
+ duelOverlay.style.display="block";
+ add("1:1 맞장 진입 — 현재 체력 "+G.hp+"/"+G.maxHp+" / 스태미너 "+Math.round(G.sta)+"/"+G.maxSta,"big");
+
+ const payload={
+   type:"startGangDuel",
+   player:{
+     name:"나",pers:"과묵한 승부사",trait:"강심장",combatTrait:"카운터 타격가",flaw:"없음",
+     juk:G.stats.juk,mat:G.stats.mat,nal:G.stats.nal,meo:G.stats.meo,vit:G.stats.vit,end:G.stats.end,
+     hp:G.hp,sta:G.sta,statuses:(G.playerStatuses||[])
+   },
+   enemy
+ };
+
+ duelFrame.onload=()=>{
+   const handler=duelFrame.onload;
+   duelFrame.onload=null;
+   try{
+     const w=duelFrame.contentWindow;
+     if(!w || typeof w.startGangPayload!=="function"){
+       throw new Error("맞장 스크립트가 실행되지 않았습니다.");
+     }
+     w.startGangPayload(payload);
+   }catch(err){
+     console.error(err);
+     duelOverlay.style.display="none";
+     duelFrame.onload=null;
+     duelFrame.srcdoc="";
+     add("맞장 초기화 실패: "+err.message,"bad");
+     alert("맞장 초기화에 실패했습니다: "+err.message);
+   }
+ };
+ const duelDoc=DUEL_HTML.split("<\\/script>").join("<"+"/script>");
+ duelFrame.srcdoc=duelDoc;
+}
+window.addEventListener("message",(ev)=>{
+ if(!ev.data||ev.data.type!=="duelResult")return;
+ const r=ev.data;
+
+ duelFrame.onload=null;
+ duelOverlay.style.display="none";
+ setTimeout(()=>{ try{duelFrame.srcdoc="";}catch(e){} },0);
+
+ G.maxHp=r.playerMaxHp||G.maxHp;
+ G.maxSta=r.playerMaxSta||G.maxSta;
+ G.hp=cl(Number(r.playerHp ?? G.hp),0,G.maxHp);
+ G.sta=cl(Number(r.playerSta ?? G.sta),0,G.maxSta);
+ G.playerStatuses=Array.isArray(r.playerStatuses)?r.playerStatuses:[];
+
+ if(r.playerInjuries?.length){
+   G.personal.injuries.push(...r.playerInjuries);
+   add("후유증 후보: "+r.playerInjuries.join(", "),"bad");
+ }
+
+ const hpText=G.hp+"/"+G.maxHp;
+ const spText=Math.round(G.sta)+"/"+G.maxSta;
+
+ // 1) KO 패배: 즉시 전투 이탈 + 나머지 패싸움 자동 진행
+ if(!r.win && r.ko){
+   G.personal.duelLosses++;
+   G.playerOut=true;
+   G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p-15,-100,100);
+   G.morO=cl(G.morO-8,0,100);
+   showOutcome(
+     "일기토 KO 패배 — 전투 이탈",
+     "상대에게 완전히 쓰러졌다. 더 이상 싸움을 이어갈 수 없어 전투에서 빠진다. 남은 패싸움은 조직원들과 간부들이 자동으로 이어간다.",
+     [{t:"전황",v:"-15"},{t:"사기",v:"-8"},{t:"체력",v:hpText},{t:"상태",v:"전투 이탈"}]
+   );
+   ACTIVE=null;
+   add("일기토 결과 반영: KO 패배 · 전투 이탈","bad");
+   startAutoBattle();
+   return;
+ }
+
+ // 2) KO 승리: 큰 전황/사기/명성 보너스 + 현재 HP/SP로 복귀
+ if(r.win && r.ko){
+   G.personal.duelWins++;
+   G.personal.kos++;
+   G.rep+=8;
+   G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p+16,-100,100);
+   G.morO=cl(G.morO+7,0,100);
+   showOutcome(
+     "일기토 KO 승리",
+     "상대를 완전히 쓰러뜨렸다. 주변에서 지켜보던 아군이 크게 들썩이고 상대 전열도 잠시 주춤한다. 그러나 맞장에서 입은 체력과 스태미너 손실은 그대로 남는다.",
+     [{t:"전황",v:"+16"},{t:"사기",v:"+7"},{t:"명성",v:"+8"},{t:"체력",v:hpText},{t:"스태미너",v:spText}]
+   );
+   ACTIVE=null;G.cool=2;
+   add("일기토 결과 반영: KO 승리 · HP "+hpText+" · SP "+spText,"good");
+   render();
+   return;
+ }
+
+ // 3) 주변에서 말림: KO가 아니므로 둘 다 패싸움에 복귀.
+ //    우세 판정은 작게 전황에 반영하고 HP/SP는 그대로 유지.
+ if(r.stopped){
+   if(r.win){
+     G.personal.duelWins++;
+     G.rep+=3;
+     G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p+6,-100,100);
+     G.morO=cl(G.morO+2,0,100);
+     showOutcome(
+       "맞장 우세 — 주변에서 말림",
+       "승부가 완전히 나기 전에 주변 사람들이 끼어들어 싸움이 끊겼다. 끝까지 쓰러뜨리지는 못했지만 당신이 우세했다. 입은 피해와 소모는 그대로 남은 채 패싸움으로 돌아간다.",
+       [{t:"전황",v:"+6"},{t:"사기",v:"+2"},{t:"명성",v:"+3"},{t:"체력",v:hpText},{t:"스태미너",v:spText}]
+     );
+     add("맞장 결과 반영: 우세 판정 · HP "+hpText+" · SP "+spText,"good");
+   }else{
+     G.personal.duelLosses++;
+     G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p-6,-100,100);
+     G.morO=cl(G.morO-2,0,100);
+     showOutcome(
+       "맞장 열세 — 주변에서 말림",
+       "주변 사람들이 끼어들어 싸움이 끊겼다. 쓰러지지는 않았지만 상대에게 밀린 채 끝났다. 전투 이탈은 아니지만 이미 잃은 체력과 스태미너는 회복되지 않는다.",
+       [{t:"전황",v:"-6"},{t:"사기",v:"-2"},{t:"체력",v:hpText},{t:"스태미너",v:spText}]
+     );
+     add("맞장 결과 반영: 열세 판정 · HP "+hpText+" · SP "+spText,"bad");
+   }
+   ACTIVE=null;G.cool=2;render();
+   return;
+ }
+
+ // 4) 혹시 다른 종료 사유가 추가되더라도 현재 상태는 반드시 반영.
+ if(r.win){
+   G.personal.duelWins++;
+   G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p+8,-100,100);
+   showOutcome("맞장 승리","맞장에서 우세를 확정하고 패싸움으로 돌아왔다. 손실된 HP/SP는 그대로 유지된다.",[{t:"전황",v:"+8"},{t:"체력",v:hpText},{t:"스태미너",v:spText}]);
+ }else{
+   G.personal.duelLosses++;
+   G.zones[G.playerZone].p=cl(G.zones[G.playerZone].p-8,-100,100);
+   showOutcome("맞장 패배","맞장에서 밀렸지만 KO는 아니어서 패싸움에는 계속 남는다. 손실된 HP/SP는 그대로 유지된다.",[{t:"전황",v:"-8"},{t:"체력",v:hpText},{t:"스태미너",v:spText}]);
+ }
+ ACTIVE=null;G.cool=2;render();
+});
+function startAutoBattle(){
+ if(timer)clearInterval(timer);G.run=false;runBtn.textContent="전투 이탈";
+ autoBox.style.display="block";autoLog.innerHTML="";
+ AUTO_TIMER=setInterval(()=>{
+   if(G.end){clearInterval(AUTO_TIMER);return}
+   battleTick(true);
+   if(Math.random()<.22){
+     let p=pick(G.people),msg;
+     if(Math.random()<.5){msg=p.name+"이 주변 인원을 모아 전열을 다시 세운다.";G.front+=3}
+     else{msg=p.name+" 쪽이 상대 압박에 밀린다.";G.front-=3}
+     autoAdd(msg);
+   }
+   endCheck();render();
+ },700);
+}
+function autoAdd(t){let d=document.createElement("div");d.className="entry";d.innerHTML='<span class="time">'+fmt(G.t)+'</span> '+t;autoLog.appendChild(d);autoLog.scrollTop=autoLog.scrollHeight;add(t,"info")}
+function cancelBrokenDuel(){
+ duelFrame.onload=null;
+ duelOverlay.style.display="none";
+ duelFrame.srcdoc="";
+ add("맞장 화면을 닫고 패싸움으로 복귀했다.","info");
+}
+function renderEvent(){
+ if(G.playerOut){eventArea.innerHTML="";return}
+ if(!ACTIVE){eventArea.innerHTML='<div class="event"><div class="etype">진행 중</div><div class="etitle">새 사건을 기다리는 중</div><div class="edesc">전황·직위·관계 상태에 맞는 사건이 발생합니다. 같은 4지선다가 반복되지 않도록 사건마다 선택지가 다릅니다.</div></div>';return}
+ eventArea.innerHTML='<div class="event"><div class="etype">'+ACTIVE.rarity+' 사건 · '+RANKS[rank].name+' · '+Math.max(0,ACTIVE.timeout-ACTIVE.age)+'틱 내 대응</div><div class="etitle">'+ACTIVE.title+'</div><div class="edesc">'+ACTIVE.desc+'</div><div class="choices">'+ACTIVE.opts.map((o,i)=>'<button class="choice" onclick="chooseEvent('+i+')"><strong>'+o+'</strong><span class="hint">'+choiceHint(ACTIVE.kind,i)+'</span></button>').join("")+'</div></div>';
+}
+function choiceHint(k,i){
+ const H={duel:["맞장 v5 실제 진입","전황 손실 가능"],friendDown:["부상 위험 / 명성 보상","동료 추가 피해 위험","안정적"],gapOrder:["고위험 고보상","중간 위험","안전"],twoCrises:["한쪽 확실히 살림","핵심 인물 제거 기회","둘 다 실패 가능"],reserveDecision:["예비대 전부 소모","절반 보존","후반 대비"],policeContact:["경찰 악화 방지","전황 우선","관계 크게 악화 가능"],localHelp:["피해 최소화","퇴로 확보","주민 도움 거절"]};
+ return(H[k]&&H[k][i])||"결과는 현재 전황과 인물 상태에 따라 달라짐";
+}
+function renderWorld(){world.innerHTML=G.zones.map((z,i)=>'<div class="zone '+(rank==="grunt"&&i===G.playerZone?"current":"")+'"><b>'+ZN[i]+'</b><div class="small">'+z.terrain+'</div><div class="zbar"><i style="width:'+cl(50+z.p*.45,3,97)+'%"></i></div><div class="small">'+(rank==="grunt"&&i!==G.playerZone?"멀리서 자세히 알 수 없음":z.our+" vs "+z.enemy+" · "+(z.p>25?"우리 우세":z.p<-25?"열세":"팽팽"))+'</div>'+(rank==="grunt"&&!G.playerOut?'<button onclick="moveZone('+i+')">'+(i===G.playerZone?"현재 위치":"이동")+'</button>':"")+'</div>').join("")}
+function moveZone(i){if(rank!=="grunt"||G.playerOut)return;G.playerZone=i;ACTIVE=null;G.cool=1;add(ZN[i]+" 쪽으로 이동했다.","info");render()}
+function renderRoster(){let list=rank==="grunt"?G.people.filter(p=>p.zone===G.playerZone).slice(0,4):rank==="leader"?G.people.slice(0,6):G.people.slice(0,rank==="officer"?9:12);rosterTitle.textContent=rank==="grunt"?"내 주변 인물":rank==="leader"?"내 조원":rank==="officer"?"담당 인물":"주요 간부/장수";roster.innerHTML=list.map(p=>'<div class="person"><b>'+p.name+'</b> <span class="small">'+p.status+'</span><div class="tags"><span>'+p.pers+'</span><span class="trait">'+p.trait+'</span></div><div class="small">체력 '+p.hp+' · 통솔 '+p.tong+' · 충성 '+p.loyal+'</div></div>').join("")}
+function render(){
+ let v=rank==="grunt"?0:rank==="leader"?1:2;
+ if(v===0){ourMen.textContent="대략 많음";enemyMen.textContent="?";ourMorale.textContent="?";enemyMorale.textContent="?"}
+ else if(v===1){ourMen.textContent="약 "+Math.round(G.our/5)*5;enemyMen.textContent="약 "+Math.round(G.enemy/5)*5;ourMorale.textContent=G.morO>60?"높음":"보통";enemyMorale.textContent="?"}
+ else{ourMen.textContent=G.our;enemyMen.textContent=G.enemy;ourMorale.textContent=Math.round(G.morO);enemyMorale.textContent=Math.round(G.morE)}
+ marker.style.left=(50+G.front*.46)+"%";marker.style.opacity=rank==="grunt"?.4:1;state.textContent=rank==="grunt"?(G.front>30?"우리가 미는 분위기":G.front<-30?"심하게 밀리는 분위기":"정신없는 난전"):(G.front>35?"우리 우세":G.front<-35?"상대 우세":"팽팽");
+ scope.innerHTML="<b>"+RANKS[rank].name+"</b><br>"+RANKS[rank].desc;
+ objective.innerHTML=(rank==="grunt"?'<span class="pill">HP '+G.hp+'/'+G.maxHp+'</span><span class="pill">SP '+Math.round(G.sta)+'/'+G.maxSta+'</span><span class="pill">개인 명성 '+G.rep+'</span>'+(G.playerStatuses.length?'<span class="pill">상태 '+G.playerStatuses.join(", ")+'</span>':""):rank==="leader"?'<span class="pill">지휘력 '+G.cmd+'/2</span><span class="pill">조원 생존</span>':rank==="officer"?'<span class="pill">지휘력 '+G.cmd+'/4</span><span class="pill">동시 위기 우선순위</span>':'<span class="pill">지휘력 '+G.cmd+'/6</span><span class="pill">예비 '+G.reserve+'명</span>')+'<br><span class="small">경찰 '+G.police+' · 지역 우호도 '+G.local+' · 영향력 '+G.influence+'</span>';
+ objective.innerHTML += '<br><span class="small">주먹 '+G.stats.juk+' · 맷집 '+G.stats.mat+' · 날렵 '+G.stats.nal+' · 체력 '+G.stats.vit+' · 지구력 '+G.stats.end+' · 머리 '+G.stats.meo+'</span>';
+ renderWorld();renderRoster();renderEvent();
+}
+function endCheck(){
+ if(G.end)return;
+ if(G.front>=92||G.enemy<=5||G.morE<=4)return finish(true,"상대 전열 붕괴");
+ if(G.front<=-92||G.our<=5||G.morO<=4)return finish(false,"우리 전열 붕괴");
+ if(G.t>=900)return finish(G.front>=0,"장시간 충돌 후 종료");
+}
+function finish(win,why){
+ G.end=true;G.run=false;if(timer)clearInterval(timer);if(AUTO_TIMER)clearInterval(AUTO_TIMER);runBtn.textContent="종료";
+ add((win?"우리 조직 승리":"상대 조직 승리")+" — "+why,"big");
+ finalBox.style.display="block";
+ finalBox.innerHTML='<b>패싸움 결과: '+(win?"승리":"패배")+'</b><br><span class="small">'+why+'</span><hr style="border-color:#4a432e"><b>개인 결과</b><br>일기토 '+G.personal.duelWins+'승 '+G.personal.duelLosses+'패 · 구조 '+G.personal.rescues+'회 · 명성 '+G.rep+' · '+(G.playerOut?"전투 이탈":"끝까지 참가")+(G.personal.injuries.length?'<br>후유증 후보: '+[...new Set(G.personal.injuries)].join(", "):"")+'<br><br><b>조직 결과</b><br>우리 잔존 '+G.our+'명 / 상대 잔존 '+G.enemy+'명<br>최종 사기 '+Math.round(G.morO)+' : '+Math.round(G.morE)+'<br>경찰 관계 '+G.police+' · 지역 우호도 '+G.local+' · 지역 영향력 '+G.influence;
+}
+function add(t,c=""){let d=document.createElement("div");d.className="entry "+c;d.innerHTML='<span class="time">'+fmt(G?G.t:0)+'</span> '+t;log.appendChild(d);log.scrollTop=log.scrollHeight;if(G)G.history.push(t)}
+function fmt(x){let m=Math.floor(x/60),s=x%60;return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+newBattle();
+
+</script>
+</body></html>
