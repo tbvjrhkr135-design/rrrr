@@ -17590,5 +17590,155 @@ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded"
 else {setTimeout(installButton,30);setTimeout(installButton,250);}
 })();
 </script>
+
+<script id="v8120-direct-panel-isolation-host">
+(function(){
+"use strict";
+const NB=window.NangmanBattle;
+if(!NB||typeof NB.battleHTML!=="string")return;
+if(NB.battleHTML.indexOf("v8120-direct-panel-isolation")>=0)return;
+
+/* v81.19의 MutationObserver는 실기기 Safari에서 오히려 보이는 재작성 경쟁을 만들 수 있다.
+   battle iframe이 열리기 전에 해당 observer script만 제거한다. */
+(function strip8119(){
+  const tag='<script id="v8119-lockdown">';
+  const s=NB.battleHTML.indexOf(tag);
+  if(s<0)return;
+  const e=NB.battleHTML.indexOf('<\/script>',s);
+  if(e<0)return;
+  NB.battleHTML=NB.battleHTML.slice(0,s)+NB.battleHTML.slice(e+9);
+})();
+
+const INNER=`
+<script id="v8120-direct-panel-isolation">
+(function(){
+"use strict";
+const V="81.20-direct-panel-isolation";
+
+function me8120(){try{return G?.v55?.actors?.find(a=>a&&(a.isMe||a.battleId==="player"))||null}catch(_){return null}}
+function direct8120(){try{return !!G?.v813?.direct&&!!me8120()&&!G?.playerOut&&!G?.end}catch(_){return false}}
+function zone8120(){const a=me8120();return Math.max(0,Math.min(2,Number(a?.zone??G?.playerZone??1)|0))}
+function zn8120(z){try{return (typeof ZN!=="undefined"&&ZN[z])||["입구","중앙","골목"][z]||("전선 "+(z+1))}catch(_){return "현장"}}
+function rank8120(){try{return typeof rankNum68==="function"?rankNum68():Number(me8120()?.rank||0)}catch(_){return Number(me8120()?.rank||0)}}
+function rankName8120(r){try{return typeof exactRank68==="function"?exactRank68(r):(me8120()?.role||"간부")}catch(_){return "간부"}}
+function bandName8120(r){try{return typeof roleBand68==="function"?(roleBand68(r)?.name||"간부"):"간부"}catch(_){return "간부"}}
+
+let stablePanel=null,lastZone=-1,lastRank=-1;
+function buildPanel8120(){
+  let p=document.getElementById("v8120DirectPanel");
+  if(p){stablePanel=p;return p}
+  p=document.createElement("div");
+  p.id="v8120DirectPanel";
+  p.className="v68role v8120-direct-panel";
+  p.hidden=true;
+
+  const top=document.createElement("div");top.className="v68roleTop";
+  const left=document.createElement("div");
+  const title=document.createElement("b");title.className="v8120-title";
+  const goal=document.createElement("div");goal.className="v68roleGoal v8120-goal";
+  left.append(title,goal);
+  const cool=document.createElement("span");cool.className="v68cool";cool.textContent="현장 개입 중";
+  top.append(left,cool);
+
+  const cmds=document.createElement("div");cmds.className="v68cmds v8120-direct-cmds";
+  const status=document.createElement("span");status.className="v8120-status";
+  const sb=document.createElement("b");sb.className="v8120-status-title";
+  const sm=document.createElement("small");sm.textContent="전선 지휘 버튼은 쓸 수 없습니다. 전체 지휘는 차석·현장 간부가 대신합니다.";
+  status.append(sb,sm);
+  const btn=document.createElement("button");btn.type="button";btn.className="v8120-return";btn.textContent="지휘소 복귀";
+  btn.addEventListener("click",function(ev){ev.preventDefault();ev.stopPropagation();window.v8120ReturnToCommand()});
+  cmds.append(status,btn);
+  p.append(top,cmds);
+
+  const original=document.getElementById("v68RolePanel");
+  if(original&&original.parentNode)original.insertAdjacentElement("afterend",p);
+  else if(typeof objective!=="undefined"&&objective&&objective.parentNode)objective.insertAdjacentElement("afterend",p);
+  else document.body.appendChild(p);
+  stablePanel=p;return p;
+}
+
+function sync8120(){
+  const direct=direct8120();
+  document.body.classList.toggle("v8120-direct-active",direct);
+  if(!direct){
+    const p=document.getElementById("v8120DirectPanel");if(p)p.hidden=true;
+    lastZone=-1;lastRank=-1;
+    return false;
+  }
+  const p=buildPanel8120();p.hidden=false;
+  const z=zone8120(),r=rank8120();
+  if(z!==lastZone||r!==lastRank){
+    const title=p.querySelector(".v8120-title");if(title)title.textContent=rankName8120(r)+" · "+bandName8120(r)+" 역할";
+    const goal=p.querySelector(".v8120-goal");if(goal)goal.textContent="직접 참전 중 · "+zn8120(z)+" · 전체 지휘는 차석·현장 간부가 대신 수행";
+    const st=p.querySelector(".v8120-status-title");if(st)st.textContent="직접 참전 중 · "+zn8120(z);
+    lastZone=z;lastRank=r;
+  }
+  return true;
+}
+
+/* 핵심: 직접 참전 중에는 기존 v68 패널 렌더 체인 자체를 실행하지 않는다.
+   화면에 보이는 것은 별도 stable panel 하나뿐이라 old wrapper들이 원본을 덮어써도 보이지 않는다. */
+const prevRole8120=typeof renderRole68==="function"?renderRole68:null;
+if(prevRole8120){
+  renderRole68=function(){
+    if(direct8120()){sync8120();return;}
+    sync8120();
+    return prevRole8120.apply(this,arguments);
+  };
+}
+
+/* 직접 개입/복귀 순간에는 tick을 기다리지 않고 즉시 표시 상태를 바꾼다. */
+const prevEnter8120=typeof window.v813Enter==="function"?window.v813Enter:null;
+if(prevEnter8120){
+  window.v813Enter=function(){const r=prevEnter8120.apply(this,arguments);sync8120();return r};
+}
+const prevReturn8120=typeof window.v813Return==="function"?window.v813Return:null;
+if(prevReturn8120){
+  window.v813Return=function(){const r=prevReturn8120.apply(this,arguments);sync8120();return r};
+}
+
+window.v8120ReturnToCommand=function(){
+  if(!direct8120()){sync8120();return false}
+  let ok=false;
+  try{if(typeof window.v817ReturnToCommand==="function"){window.v817ReturnToCommand();ok=!direct8120()}}catch(e){console.warn("[v81.20] v817 return",e)}
+  if(!ok){try{if(typeof window.v815ReturnToCommand==="function"){window.v815ReturnToCommand();ok=!direct8120()}}catch(e){console.warn("[v81.20] v815 return",e)}}
+  if(!ok){try{if(prevReturn8120){prevReturn8120();ok=!direct8120()}}catch(e){console.warn("[v81.20] v813 return",e)}}
+  if(!ok){try{if(G?.v813){G.v813.direct=false;G.commandPost=true;ok=true}}catch(_){}}
+  sync8120();
+  try{if(typeof renderRole68==="function")renderRole68()}catch(_){ }
+  return ok;
+};
+
+/* 전투 render 전체를 새로 감싸지 않는다. zone 표기 갱신은 가벼운 text update만 수행. */
+const labelTimer8120=setInterval(()=>{try{if(G?.end||G?.playerOut){sync8120();return}if(direct8120())sync8120()}catch(_){ }},220);
+
+const css=document.createElement("style");css.id="v8120-style";css.textContent=\`
+body.v8120-direct-active #v68RolePanel{display:none!important}
+#v8120DirectPanel[hidden]{display:none!important}
+body:not(.v8120-direct-active) #v8120DirectPanel{display:none!important}
+body.v8120-direct-active #v8120DirectPanel{display:block!important}
+#v8120DirectPanel .v8120-direct-cmds{display:flex!important;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#v8120DirectPanel .v8120-status{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}
+#v8120DirectPanel .v8120-status b{font-size:13px;color:#e0c069}
+#v8120DirectPanel .v8120-status small{font-size:11px;opacity:.62;line-height:1.45}
+#v8120DirectPanel .v8120-return{flex:0 0 auto;min-height:38px;padding:8px 16px;cursor:pointer;border:1px solid #c9a227;color:#f0e2b4;background:#1d1a13;font-size:13px;letter-spacing:.06em;white-space:nowrap;touch-action:manipulation;user-select:none;position:relative;z-index:70}
+#v8120DirectPanel .v8120-return:hover{border-color:#e1bd68;background:#292216}
+#v8120DirectPanel .v8120-return:active{transform:translateY(1px)}
+@media(max-width:650px){#v8120DirectPanel .v8120-direct-cmds{align-items:stretch;flex-direction:column}#v8120DirectPanel .v8120-return{width:100%}}
+\`;document.head.appendChild(css);
+
+setTimeout(sync8120,0);setTimeout(sync8120,120);
+window.NangmanV8120={version:V,state:()=>({direct:direct8120(),zone:zone8120(),stable:!!document.getElementById("v8120DirectPanel"),originalHidden:document.body.classList.contains("v8120-direct-active")})};
+console.log("[v81.20] direct command panel isolated; legacy role panel hidden during direct participation");
+})();
+<\/script>`;
+
+const at=NB.battleHTML.lastIndexOf("</body>");
+NB.battleHTML=at>=0?NB.battleHTML.slice(0,at)+INNER+"\n"+NB.battleHTML.slice(at):NB.battleHTML+INNER;
+window.NangmanV8120Host={version:"81.20-direct-panel-isolation",installed:true};
+console.log("[v81.20] host installed");
+})();
+</script>
+
 </body>
 </html>
