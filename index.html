@@ -3,15 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>낭만시대 열전 · 실시간 패싸움/난전 프로토타입 v15.3a · 이동 턴 스코프 수정</title>
-<style>
+<title>낭만시대 열전 · 패싸움</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
+
 :root{
   --lacquer:#141210;--ink:#1E1B16;--ink2:#282219;--ink3:#332B20;
   --paper:#D6CCB6;--dim:#9C927C;--seal:#B0271F;--brass:#C9A227;
   --nacre:#8FA9A3;--line:rgba(201,162,39,.20);--good:#7E9F78;--bad:#C45F54;
-  --display:'Nanum Myeongjo','Batang','바탕','AppleMyungjo',serif;
-  --body:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;
-  --data:'D2Coding','Consolas',monospace;
+  --display:'Do Hyeon','Noto Sans KR','Malgun Gothic',sans-serif;
+  --body:'Noto Sans KR','Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --data:'Noto Sans KR','Pretendard','Malgun Gothic',sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--lacquer);color:var(--paper);font-family:var(--body);min-height:100%}
@@ -398,126 +399,1424 @@ h1{font-size:22px;letter-spacing:.11em}
 .tactical-board.dense-cards .mini-bars{grid-template-columns:9px 1fr 18px;gap:2px;font-size:7px}
 
 /* v15.3 — facing 표시 */
-.actor::after{
- content:"";position:absolute;left:50%;top:50%;width:7px;height:2px;
- border-radius:2px;background:rgba(255,255,255,.88);
- transform-origin:0 50%;
- transform:rotate(var(--face-angle,0rad)) translateX(4px);
- box-shadow:0 0 2px rgba(0,0,0,.55);pointer-events:none
-}
-.actor.enemy::after{background:rgba(255,225,218,.92)}
-.actor.me::after{width:9px;background:#fff0a8}
 .mini-facing{
  display:inline-flex;align-items:center;justify-content:center;
  min-width:13px;font:900 10px var(--data);color:#e8d79d;
  text-shadow:0 1px 1px rgba(0,0,0,.6)
 }
+
+/* v15.3b — 모바일 터치 안정화 */
+.mini-fighter.enemy{
+ touch-action:manipulation;
+ -webkit-tap-highlight-color:rgba(243,200,98,.12);
+}
+.mini-fighter.enemy:active{outline:1px solid rgba(243,200,98,.68)}
+.mini-name{position:relative;padding-right:18px}
+.mini-info-btn{
+ position:absolute;right:0;top:0;
+ width:17px;height:17px;min-width:17px;
+ font-size:10px;line-height:17px;
+ touch-action:manipulation;
+}
+.move-ghost-card{
+ min-width:46px;min-height:42px;
+ touch-action:manipulation;
+ -webkit-tap-highlight-color:rgba(243,200,98,.18);
+}
+@media(max-width:760px){
+ .move-ghost-card{
+   width:max(calc(var(--mini-w,72px) * .92),46px);
+   height:max(calc(var(--mini-h,48px) * .92),42px);
+ }
+}
+
+/* v15.3b-2 — 적 카드는 타깃 선택 전용 실제 button */
+button.mini-fighter.enemy{
+ appearance:none;-webkit-appearance:none;
+ text-align:left;color:inherit;font:inherit;
+ margin:0;
+}
+button.mini-fighter.enemy:focus-visible{
+ outline:2px solid #f3c862;
+ outline-offset:1px;
+}
+.target-info-row{display:flex;align-items:center;gap:7px;min-width:0}
+#targetInfo{min-width:0}
+.target-detail-btn{
+ flex:0 0 auto;min-height:26px;padding:3px 8px;
+ border:1px solid rgba(214,204,182,.24);
+ background:rgba(214,204,182,.07);color:var(--nacre);
+ font:800 9px var(--data);touch-action:manipulation;
+}
+
+/* v15.4 — 측면/후방/치명타 전장 피드백 */
+.combat-fx{
+ position:absolute;z-index:9;pointer-events:none;
+ transform:translate(-50%,-50%);
+ font:900 9px/1.1 var(--data);
+ white-space:nowrap;
+ padding:2px 4px;border-radius:4px;
+ background:rgba(8,8,8,.82);
+ border:1px solid rgba(255,255,255,.18);
+ text-shadow:0 1px 2px #000;
+ animation:combatFxFloat 720ms ease-out both;
+}
+.combat-fx.side{color:#f4d36d;border-color:rgba(244,211,109,.58)}
+.combat-fx.rear{color:#ff9b70;border-color:rgba(255,126,84,.66);font-size:10px}
+.combat-fx.crit{box-shadow:0 0 8px rgba(255,92,54,.55);font-size:10px}
+.combat-fx::after{
+ content:"";position:absolute;left:50%;top:100%;width:1px;height:8px;
+ background:currentColor;opacity:.55
+}
+@keyframes combatFxFloat{
+ 0%{opacity:0;transform:translate(-50%,-25%) scale(.82)}
+ 18%{opacity:1;transform:translate(-50%,-58%) scale(1.06)}
+ 70%{opacity:1}
+ 100%{opacity:0;transform:translate(-50%,-115%) scale(.96)}
+}
+#boardCards .combat-fx{z-index:20;font-size:10px}
+
+/* v15.5 — 풋워크 전용 이동칸 */
+.move-ghost-card.footwork{
+ border-color:rgba(242,205,97,.86);
+ background:rgba(109,91,31,.44);
+ box-shadow:0 0 0 1px rgba(242,205,97,.18),0 0 10px rgba(242,205,97,.12);
+}
+.move-ghost-card.footwork b{color:#f5d76f}
+.move-ghost-card.footwork small{color:#d9cb93}
+
+
+/* v15.6 — 전체 지도는 거시 사건만 표시 */
+.battlefield{position:relative}
+.macro-event-banner{
+ position:absolute;left:50%;top:45%;z-index:18;
+ transform:translate(-50%,-50%);
+ width:max-content;max-width:88%;
+ padding:5px 8px;
+ border:1px solid rgba(214,204,182,.24);
+ background:rgba(10,9,8,.90);
+ color:var(--paper);
+ font:900 10px/1.25 var(--body);
+ text-align:center;
+ letter-spacing:-.02em;
+ box-shadow:0 4px 15px rgba(0,0,0,.32);
+ pointer-events:none;
+ animation:macroEventPop ease-out both;
+}
+.macro-event-banner.good{border-color:rgba(143,169,163,.66);color:#c9ddd8}
+.macro-event-banner.bad{border-color:rgba(196,95,84,.70);color:#f0afa7}
+.macro-event-banner.major{
+ top:42%;padding:7px 10px;border-width:1px;
+ font:900 12px/1.25 var(--display);letter-spacing:.03em;
+ box-shadow:0 0 0 1px rgba(201,162,39,.11),0 6px 20px rgba(0,0,0,.42);
+}
+.macro-event-banner.major.good{color:#e3d48e;border-color:rgba(201,162,39,.72)}
+.macro-event-banner.major.bad{color:#f1a198;border-color:rgba(176,39,31,.78)}
+@keyframes macroEventPop{
+ 0%{opacity:0;transform:translate(-50%,-34%) scale(.90)}
+ 12%{opacity:1;transform:translate(-50%,-50%) scale(1.03)}
+ 72%{opacity:1;transform:translate(-50%,-53%) scale(1)}
+ 100%{opacity:0;transform:translate(-50%,-72%) scale(.98)}
+}
+.macro-global-wrap{
+ position:absolute;left:0;right:0;top:40%;z-index:30;
+ pointer-events:none;display:flex;justify-content:center;
+}
+.macro-global-wrap .macro-event-banner{
+ position:relative;left:auto;top:auto;transform:none;
+ max-width:min(88%,520px);padding:9px 14px;font-size:14px;
+ box-shadow:0 0 0 1px rgba(201,162,39,.18),0 8px 26px rgba(0,0,0,.55);
+ animation-name:macroGlobalPop;
+}
+@keyframes macroGlobalPop{
+ 0%{opacity:0;transform:translateY(10px) scale(.94)}
+ 12%{opacity:1;transform:translateY(0) scale(1.02)}
+ 75%{opacity:1;transform:translateY(-2px)}
+ 100%{opacity:0;transform:translateY(-16px) scale(.98)}
+}
+
+/* 전투 연대기 위계 */
+.logline.battle{
+ margin:3px 0;padding:7px 7px 7px 9px !important;
+ border-left:2px solid rgba(201,162,39,.58);
+ background:rgba(201,162,39,.055);font-weight:700;
+}
+.logline.battle.good{border-left-color:rgba(143,169,163,.82);background:rgba(143,169,163,.07)}
+.logline.battle.bad{border-left-color:rgba(196,95,84,.86);background:rgba(176,39,31,.07)}
+.logline.major{
+ margin:7px 0;padding:9px 8px 9px 10px !important;
+ border:1px solid rgba(201,162,39,.35) !important;
+ border-left:4px solid var(--brass) !important;
+ background:rgba(201,162,39,.09);
+ font:900 13px/1.45 var(--display);
+}
+.logline.major.good{border-left-color:var(--brass) !important;color:#e3d48e}
+.logline.major.bad{
+ border-color:rgba(176,39,31,.45) !important;
+ border-left-color:var(--seal) !important;
+ background:rgba(176,39,31,.10);color:#efaaa2
+}
+
+@media(max-width:760px){
+ .macro-event-banner{font-size:9px;padding:4px 6px;max-width:92%}
+ .macro-event-banner.major{font-size:11px}
+ .macro-global-wrap .macro-event-banner{font-size:12px;max-width:92%}
+}
+
+
+/* ==========================================================
+   v16.0 · 본게임 이식 기준 UI
+   전체 전황 → 바로 아래 사건 로그 → 필요할 때만 현장 인물
+   ========================================================== */
+
+.dev-hidden{display:none !important}
+
+.game-shell{
+ width:min(1040px,100%);
+ margin:0 auto;
+ padding:12px 12px calc(34px + env(safe-area-inset-bottom));
+}
+.game-header{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:4px 2px 10px;margin:0 0 10px;
+ border-bottom:1px solid rgba(201,162,39,.18);
+}
+.game-title{display:flex;align-items:baseline;gap:9px;min-width:0}
+.game-title h1{
+ margin:0;font:900 20px/1.1 var(--display);letter-spacing:.08em;color:var(--paper)
+}
+.game-title>span{
+ font:800 10px var(--data);color:var(--brass);letter-spacing:.13em
+}
+.game-head-right{display:flex;align-items:center;gap:10px}
+.game-head-right .clock{font-size:16px}
+.game-actions{display:flex;gap:5px}
+.game-btn{
+ min-height:32px;padding:5px 9px;
+ border:1px solid rgba(214,204,182,.18);
+ background:var(--ink2);color:var(--paper);
+ font:800 10px var(--body);cursor:pointer
+}
+.game-btn.primary{background:var(--seal);border-color:var(--seal)}
+.game-btn.ghost{background:transparent;color:var(--dim)}
+.game-btn.on{border-color:var(--brass);color:var(--brass)}
+
+.battle-main{display:block}
+.battle-surface{
+ border:1px solid rgba(201,162,39,.18);
+ background:var(--ink);
+ box-shadow:0 10px 30px rgba(0,0,0,.16);
+}
+.battle-summary{
+ display:grid;grid-template-columns:minmax(64px,.72fr) minmax(180px,2fr) minmax(64px,.72fr);
+ align-items:center;gap:10px;
+ padding:8px 10px;
+ border-bottom:1px solid rgba(201,162,39,.14);
+ background:rgba(0,0,0,.08);
+}
+.side-summary{text-align:center}
+.side-summary small{
+ display:block;font:800 9px var(--data);color:var(--dim);letter-spacing:.08em
+}
+.side-summary b{
+ display:block;margin-top:1px;font:900 20px/1 var(--data)
+}
+.our-side b{color:var(--nacre)}
+.enemy-side b{color:#df8178}
+
+.flow-summary{min-width:0;text-align:center}
+.flow-summary .flowtrack{height:7px;margin:0 0 5px}
+.flow-summary .marker{top:-4px;height:15px;width:6px}
+.flow-summary .flowtext{
+ display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ font:900 13px/1.2 var(--display);color:var(--paper)
+}
+
+.battlefield-stage{position:relative;padding:8px 8px 0}
+.battlefield-stage>.battlefield{margin-top:0}
+.battlefield.single .zone{min-height:360px}
+.zone{min-height:170px}
+.zonehead{padding-right:2px}
+.zonehead b{font-size:12px}
+.zonehead span{font-size:9px}
+
+.map-player-status{
+ position:absolute;left:17px;top:17px;z-index:26;
+ display:flex;align-items:center;gap:6px;
+ max-width:min(74%,360px);
+ padding:5px 7px;
+ border:1px solid rgba(201,162,39,.38);
+ background:rgba(12,10,8,.88);
+ box-shadow:0 3px 12px rgba(0,0,0,.28);
+ pointer-events:none;
+}
+.map-player-status>b{
+ flex:0 0 auto;font:900 11px var(--display);color:var(--brass)
+}
+.map-player-status>div{display:flex;gap:4px;min-width:0;flex-wrap:wrap}
+.map-player-status span{
+ display:inline-block;padding:2px 5px;
+ border:1px solid rgba(214,204,182,.14);
+ background:rgba(214,204,182,.055);
+ font:800 8px/1.2 var(--data);color:var(--dim)
+}
+.map-player-status.abnormal{
+ border-color:rgba(176,39,31,.60);
+ background:rgba(27,12,10,.91)
+}
+.map-player-status.abnormal span{
+ border-color:rgba(196,95,84,.34);color:#efaaa2;background:rgba(176,39,31,.12)
+}
+.map-player-status.out{opacity:.82}
+
+.map-melee-btn{
+ position:absolute;right:16px;bottom:10px;z-index:27;
+ min-height:30px;padding:5px 9px;
+ border:1px solid rgba(201,162,39,.72);
+ background:rgba(24,20,13,.92);color:#edd574;
+ box-shadow:0 4px 14px rgba(0,0,0,.35);
+ font:900 10px var(--body);cursor:pointer;
+ touch-action:manipulation
+}
+.map-melee-btn[hidden]{display:none}
+.map-melee-btn.forced{
+ border-color:rgba(196,95,84,.85);background:rgba(49,17,13,.94);color:#f0aaa2
+}
+.map-melee-btn:active{transform:translateY(1px)}
+
+.map-legend{
+ display:flex;gap:12px;align-items:center;
+ padding:7px 11px 8px;
+ font:9px var(--data);color:var(--dim);
+ border-bottom:1px solid rgba(214,204,182,.08)
+}
+
+.battle-log-inline{
+ border-top:1px solid rgba(201,162,39,.12);
+ background:#11100e
+}
+.battle-log-head{
+ display:flex;justify-content:space-between;align-items:center;gap:8px;
+ padding:7px 10px 5px;
+ border-bottom:1px solid rgba(214,204,182,.07)
+}
+.battle-log-head b{
+ font:900 11px var(--display);color:var(--brass);letter-spacing:.06em
+}
+.battle-log-head span{
+ font:8px var(--data);color:var(--dim)
+}
+.battle-log-inline .log{
+ max-height:168px;min-height:112px;
+ padding:3px 9px 7px;
+ background:#11100e;
+ font-size:11px;line-height:1.42
+}
+.battle-log-inline .log div{padding:4px 0}
+
+.roster-drawer{
+ margin-top:9px;
+ border:1px solid rgba(214,204,182,.12);
+ background:rgba(30,27,22,.82)
+}
+.roster-drawer>summary{
+ list-style:none;cursor:pointer;
+ display:flex;justify-content:space-between;align-items:center;gap:10px;
+ padding:10px 11px;
+ user-select:none
+}
+.roster-drawer>summary::-webkit-details-marker{display:none}
+.roster-drawer>summary::after{
+ content:"＋";order:3;color:var(--brass);font:14px var(--data)
+}
+.roster-drawer[open]>summary::after{content:"－"}
+.roster-drawer>summary span{
+ font:900 11px var(--display);color:var(--paper);letter-spacing:.08em
+}
+.roster-drawer>summary small{
+ margin-left:auto;font:9px var(--data);color:var(--dim)
+}
+.roster-final{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;
+ max-height:330px;overflow:auto;
+ padding:0 9px 9px
+}
+.roster-person{
+ min-width:0;padding:7px 8px;
+ border:1px solid rgba(214,204,182,.08);
+ background:rgba(17,16,14,.72)
+}
+.roster-person.our{border-left:2px solid var(--nacre)}
+.roster-person.enemy{border-left:2px solid var(--seal)}
+.roster-person.out{opacity:.45}
+.roster-person b{
+ display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ font:800 11px var(--display)
+}
+.roster-person small{
+ display:block;margin-top:2px;color:var(--dim);
+ font:8px/1.4 var(--data)
+}
+.roster-person>span{
+ display:inline-block;margin-top:4px;padding:2px 4px;
+ border:1px solid rgba(196,95,84,.28);
+ color:#e5a39c;background:rgba(176,39,31,.08);
+ font:8px var(--data)
+}
+
+/* 전체 지도에서 개발자용 설명성 타이틀/패널은 보이지 않는다. */
+.arena-boundary{pointer-events:none}
+
+/* 데스크톱에서도 지도와 로그가 시야에서 분리되지 않도록 전체 폭 고정 */
+@media(min-width:761px){
+ .battle-main{max-width:920px;margin:0 auto}
+}
+
+/* 모바일 본게임 기준 */
+@media(max-width:760px){
+ .game-shell{padding:7px 7px calc(22px + env(safe-area-inset-bottom))}
+ .game-header{padding:3px 1px 7px;margin-bottom:7px}
+ .game-title h1{font-size:16px;letter-spacing:.05em}
+ .game-title>span{display:none}
+ .game-head-right{gap:6px}
+ .game-head-right .clock{font-size:13px}
+ .game-actions{gap:3px}
+ .game-btn{min-height:28px;padding:4px 6px;font-size:9px}
+ .game-btn.ghost{display:none}
+
+ .battle-summary{
+   grid-template-columns:52px minmax(0,1fr) 52px;
+   gap:6px;padding:6px 7px
+ }
+ .side-summary b{font-size:17px}
+ .flow-summary .flowtext{font-size:11px}
+ .battlefield-stage{padding:5px 5px 0}
+ .battlefield.single .zone{min-height:318px}
+ .zone{min-height:155px}
+ .zonehead b{font-size:10px}
+ .zonehead span{font-size:8px}
+ .field{top:47px}
+
+ .map-player-status{left:11px;top:11px;padding:4px 6px}
+ .map-player-status>b{font-size:10px}
+ .map-player-status span{font-size:7px}
+ .map-melee-btn{right:10px;bottom:7px;min-height:29px;padding:5px 8px;font-size:9px}
+
+ .map-legend{padding:6px 8px;gap:9px;font-size:8px}
+ .battle-log-head{padding:6px 8px 4px}
+ .battle-log-head b{font-size:10px}
+ .battle-log-inline .log{
+   min-height:100px;max-height:132px;
+   padding:3px 7px 6px;font-size:10px;line-height:1.36
+ }
+ .battle-log-inline .log div{padding:3px 0}
+
+ .roster-drawer{margin-top:6px}
+ .roster-drawer>summary{padding:9px}
+ .roster-final{grid-template-columns:1fr;max-height:300px;padding:0 7px 7px}
+}
+
+/* 아주 작은 화면 */
+@media(max-width:380px){
+ .game-actions #pauseBtn{padding-left:5px;padding-right:5px}
+ .battlefield.single .zone{min-height:292px}
+ .battle-log-inline .log{max-height:118px}
+}
+
+/* v16.0 final polish */
+.battle-surface .arena-boundary{display:none !important}
+.map-player-status{top:68px}
+@media(max-width:760px){.map-player-status{top:61px}}
+
+
+/* v16.1 — 지도 좌상단 플레이어 HP / SP */
+.map-player-status{
+ display:block;
+ min-width:176px;
+ max-width:min(78%,260px);
+ padding:6px 7px 7px;
+}
+.map-player-head{
+ display:flex;align-items:center;gap:6px;
+ margin-bottom:5px;
+}
+.map-player-head>b{
+ flex:0 0 auto;
+ font:900 11px var(--display);
+ color:var(--brass);
+}
+.map-player-states{
+ display:flex;gap:4px;flex-wrap:wrap;min-width:0;
+}
+.map-player-states span{
+ display:inline-block;padding:2px 5px;
+ border:1px solid rgba(214,204,182,.14);
+ background:rgba(214,204,182,.055);
+ font:800 8px/1.2 var(--data);color:var(--dim);
+}
+.map-player-resource{
+ display:grid;
+ grid-template-columns:22px minmax(70px,1fr) 54px;
+ align-items:center;gap:5px;
+ margin-top:3px;
+}
+.map-player-resource em{
+ font:900 8px var(--data);
+ font-style:normal;
+ letter-spacing:.04em;
+}
+.map-player-resource i{
+ position:relative;
+ display:block;height:6px;
+ overflow:hidden;
+ border:1px solid rgba(255,255,255,.10);
+ background:rgba(0,0,0,.42);
+}
+.map-player-resource i u{
+ position:absolute;left:0;top:0;bottom:0;
+ display:block;text-decoration:none;
+}
+.map-player-resource strong{
+ text-align:right;
+ font:800 8px var(--data);
+ color:var(--paper);
+}
+.map-player-resource.hp em{color:#df8a80}
+.map-player-resource.hp i u{background:#b84a3f}
+.map-player-resource.sp em{color:#d9c569}
+.map-player-resource.sp i u{background:#b49c43}
+
+.map-player-status.abnormal .map-player-states span{
+ border-color:rgba(196,95,84,.34);
+ color:#efaaa2;
+ background:rgba(176,39,31,.12);
+}
+
+@media(max-width:760px){
+ .map-player-status{
+   min-width:160px;
+   max-width:min(80%,225px);
+   padding:5px 6px 6px;
+ }
+ .map-player-head{margin-bottom:4px}
+ .map-player-head>b{font-size:10px}
+ .map-player-states span{font-size:7px;padding:1px 4px}
+ .map-player-resource{
+   grid-template-columns:19px minmax(62px,1fr) 48px;
+   gap:4px;margin-top:2px;
+ }
+ .map-player-resource em,
+ .map-player-resource strong{font-size:7px}
+ .map-player-resource i{height:5px}
+}
+
+
+/* ==========================================================
+   v16.3 · v87 본게임 FINAL(v70 NOIR UI) 타이포그래피 동기화
+   업로드된 nangman_jangsu_v87_duel_personality.html 기준
+   ========================================================== */
+
+html,body{
+  font-family:var(--body) !important;
+  font-size:14.5px;
+  line-height:1.62;
+  letter-spacing:-.012em;
+  font-variant-numeric:tabular-nums;
+}
+button,input,select,textarea{
+  font-family:var(--body) !important;
+}
+button{letter-spacing:-.01em}
+
+/* ── 게임 헤더: 본게임 masthead 문법 ── */
+.game-title h1{
+  font-family:var(--display) !important;
+  font-weight:400 !important;
+  font-size:30px;
+  line-height:1.05;
+  letter-spacing:.045em;
+  color:#fff;
+  text-shadow:0 2px 18px rgba(0,0,0,.5);
+}
+.game-title>span{
+  font-family:var(--body) !important;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.04em;
+  color:var(--dim);
+}
+.game-head-right .clock{
+  font-family:var(--body) !important;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:.02em;
+  color:#efe3cc;
+}
+
+/* ── 버튼: 본게임은 Do Hyeon이 아니라 Noto Sans KR ── */
+.game-btn,
+.map-melee-btn,
+.target-detail-btn,
+.brawlactions button,
+.detailclose,
+.orderbtn,
+.move-ghost-card{
+  font-family:var(--body) !important;
+  font-weight:800 !important;
+  letter-spacing:-.01em !important;
+}
+.game-btn{font-size:12px}
+.map-melee-btn{
+  font-size:11px;
+  letter-spacing:.01em !important;
+}
+
+/* ── 전황 요약: 일반 UI 라벨은 body ── */
+.side-summary small{
+  font-family:var(--body) !important;
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:.08em;
+  color:#9198a3;
+}
+.side-summary b{
+  font-family:var(--body) !important;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+.flow-summary .flowtext{
+  font-family:var(--body) !important;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+
+/* ── 지역/전장 헤더 ── */
+.zonehead b{
+  font-family:var(--body) !important;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.zonehead span{
+  font-family:var(--body) !important;
+  font-size:9.5px;
+  font-weight:700;
+  letter-spacing:0;
+  color:#777e88;
+}
+
+/* ── 내 상태: 본게임 g/stats와 같은 Noto Sans 계열 ── */
+.map-player-head>b{
+  font-family:var(--body) !important;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.map-player-states span{
+  font-family:var(--body) !important;
+  font-weight:700;
+  letter-spacing:-.01em;
+}
+.map-player-resource em{
+  font-family:var(--body) !important;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+.map-player-resource strong{
+  font-family:var(--body) !important;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+/* ── 범례 / 보조정보 ── */
+.map-legend,
+.battle-log-head span,
+.roster-drawer>summary small{
+  font-family:var(--body) !important;
+  font-weight:500;
+  letter-spacing:-.01em;
+}
+
+/* ── 패널 제목: v70 panel>h2와 같은 body 800 ── */
+.battle-log-head b,
+.roster-drawer>summary span,
+.boardtop b{
+  font-family:var(--body) !important;
+  font-weight:800 !important;
+  letter-spacing:.12em !important;
+}
+.battle-log-head b{
+  font-size:12px;
+}
+
+/* ── 현장 인물: row/act처럼 전부 Noto Sans KR ── */
+.roster-person b{
+  font-family:var(--body) !important;
+  font-weight:800 !important;
+  font-size:13px;
+  letter-spacing:-.01em;
+}
+.roster-person small,
+.roster-person>span{
+  font-family:var(--body) !important;
+  font-weight:500;
+  letter-spacing:-.01em;
+}
+
+/* ── 로그: v70 ledger 문법 ── */
+.battle-log-inline .log,
+.logline{
+  font-family:var(--body) !important;
+  font-weight:400;
+  letter-spacing:-.012em;
+}
+.logline.battle{
+  font-family:var(--body) !important;
+  font-weight:600;
+}
+.logline.major{
+  font-family:var(--body) !important;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+
+/* ── 거시 사건: 일반 사건은 body, 큰 타이틀만 Do Hyeon ── */
+.macro-event-banner{
+  font-family:var(--body) !important;
+  font-weight:800 !important;
+  letter-spacing:-.01em;
+}
+.macro-event-banner.major{
+  font-family:var(--display) !important;
+  font-weight:400 !important;
+  letter-spacing:.02em !important;
+}
+
+/* ── 난전 카드: 이름/수치 모두 본게임 body/data(Noto Sans) ── */
+.mini-name strong{
+  font-family:var(--body) !important;
+  font-weight:800 !important;
+  letter-spacing:-.01em;
+}
+.mini-bars,
+.mini-status,
+.mini-mark,
+.mini-facing,
+.mini-targeted,
+.mini-value,
+.boardcount{
+  font-family:var(--body) !important;
+}
+.mini-value{font-weight:800}
+
+/* 난전 상단/상세 팝업의 '제목'만 display */
+.detailhead h3,
+.zoomhead h2{
+  font-family:var(--display) !important;
+  font-weight:400 !important;
+  letter-spacing:.025em !important;
+}
+.detailhead small,
+.detail-cell small,
+.detail-cell b,
+.detail-stat small,
+.detail-stat b{
+  font-family:var(--body) !important;
+}
+.detail-cell b,.detail-stat b{font-weight:700}
+
+/* ── 직접 전투 선택 버튼도 본게임 act/row 문법 ── */
+.brawlactions button,
+.orderbtn,
+.move-ghost-card{
+  font-family:var(--body) !important;
+  font-weight:800 !important;
+}
+.movehint,
+.target-detail-btn{
+  font-family:var(--body) !important;
+}
+
+/* ── 타격 피드백도 body. 숫자용 별도 모노스페이스 없음 ── */
+.combat-fx{
+  font-family:var(--body) !important;
+  font-weight:900 !important;
+  letter-spacing:-.01em;
+}
+
+/* 모바일: v87 v70 반응형 타이포 감각 */
+@media(max-width:900px){
+  .game-title h1{font-size:27px}
+}
+@media(max-width:560px){
+  .game-title h1{font-size:25px}
+  .game-head-right .clock{font-size:11px}
+  .game-btn{font-size:10.5px}
+  .map-melee-btn{font-size:10px}
+  .battle-log-head b{font-size:11.5px}
+  .roster-person b{font-size:12.5px}
+}
+
+
+/* v16.4 · 난전 카드 판독성 확대 */
+.mini-fighter,button.mini-fighter{
+  min-width:62px;min-height:54px;
+  padding:5px 6px 4px;
+  border-radius:2px;text-align:left;color:inherit;
+  font-family:var(--body)!important;
+  touch-action:manipulation;
+}
+.mini-name{
+  display:block!important;position:relative;
+  height:19px!important;padding:0!important;margin:0 0 1px;
+  overflow:visible;
+}
+.mini-name strong{
+  display:block;width:100%;padding:0!important;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--body)!important;
+  font-size:12.5px!important;font-weight:900!important;
+  line-height:18px;letter-spacing:-.03em!important;
+}
+.mini-bars{
+  grid-template-columns:18px minmax(18px,1fr) 25px!important;
+  gap:3px!important;height:12px!important;
+  font-family:var(--body)!important;font-size:8px!important;
+}
+.mini-bar{height:5px}
+.mini-value{font-size:8px!important;font-weight:800!important}
+.mini-bottom{
+  display:flex!important;height:14px!important;margin-top:1px;
+  align-items:center;gap:3px;overflow:hidden;
+}
+.mini-facing{flex:0 0 auto;min-width:12px;font-size:10px!important}
+.mini-mark{
+  flex:0 0 auto;min-width:10px;
+  font-family:var(--body)!important;font-size:8px!important;font-weight:900!important;
+}
+.mini-mark.me-mark{color:#f3c862}
+.mini-status-wrap{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden}
+.mini-status{
+  flex:0 1 auto;min-width:0;max-width:38px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:1px 3px;font-family:var(--body)!important;
+  font-size:7px!important;font-weight:800!important;
+}
+.mini-targeted{
+  flex:0 0 auto;margin-left:auto;
+  font-family:var(--body)!important;font-size:7px!important;font-weight:900!important;
+}
+.mini-info-btn{display:none!important}
+
+button.mini-fighter.our{
+  appearance:none;-webkit-appearance:none;cursor:pointer;
+}
+button.mini-fighter.our:active{outline:1px solid rgba(143,169,163,.72)}
+
+.tactical-board.dense-cards .mini-bottom{display:flex!important}
+.tactical-board.dense-cards .mini-name{height:18px!important}
+.tactical-board.dense-cards .mini-name strong{font-size:11px!important}
+.tactical-board.dense-cards .mini-bars{
+  grid-template-columns:16px minmax(16px,1fr) 22px!important;
+  height:11px!important;font-size:7px!important;
+}
+.tactical-board.dense-cards .mini-status{font-size:6.5px!important;padding:1px 2px}
+
+.move-ghost-card{width:var(--mini-w,76px);height:var(--mini-h,58px)}
+
+@media(max-width:760px){
+  .tactical-board{min-height:330px;max-height:520px}
+  .mini-fighter,button.mini-fighter{
+    width:var(--mini-w,72px);height:var(--mini-h,58px);
+    min-width:62px;min-height:54px;padding:4px 5px 3px;
+  }
+  .mini-name{height:18px!important}
+  .mini-name strong{font-size:11.5px!important;line-height:17px}
+  .mini-bars{
+    grid-template-columns:17px minmax(18px,1fr) 23px!important;
+    height:11px!important;font-size:7.5px!important;
+  }
+  .mini-bottom{height:13px!important;gap:2px}
+  .mini-status{max-width:34px;font-size:6.5px!important}
+  .move-ghost-card{
+    width:max(calc(var(--mini-w,72px)*.96),58px);
+    height:max(calc(var(--mini-h,58px)*.96),50px);
+  }
+}
+@media(max-width:360px){
+  .mini-fighter,button.mini-fighter{
+    width:var(--mini-w,66px);height:var(--mini-h,56px);
+    min-width:60px;min-height:52px;
+  }
+  .mini-name strong{font-size:11px!important}
+}
+
+/* v17.0 · 공간 기술 버튼 */
+.brawlskills{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;
+ margin-top:6px;padding-top:6px;border-top:1px solid rgba(201,162,39,.16);
+}
+.brawlskills button{
+ min-height:48px;padding:7px 6px;
+ border:1px solid rgba(201,162,39,.30);
+ background:rgba(201,162,39,.055);color:var(--paper);
+ font-family:var(--body)!important;font-weight:800;cursor:pointer;
+}
+.brawlskills button b{display:block;font-size:11.5px}
+.brawlskills button small{display:block;margin-top:2px;font-size:8px;color:var(--brass);font-weight:600}
+.brawlskills button:disabled{opacity:.32;cursor:not-allowed}
+.brawlskills button:not(:disabled):active{transform:translateY(1px);border-color:var(--brass)}
+@media(max-width:560px){
+ .brawlskills{gap:4px}
+ .brawlskills button{min-height:44px;padding:6px 4px}
+ .brawlskills button b{font-size:10.5px}
+ .brawlskills button small{font-size:7px}
+}
+
+/* v17.1 다중 타격 순차 표시 */
+#boardCards .combat-fx{z-index:24;min-width:max-content}
+
+
+/* v17.3 · 난전 피아식별 강화 */
+.mini-fighter.our,
+button.mini-fighter.our{
+  background:
+    linear-gradient(180deg,rgba(67,105,111,.34),rgba(24,41,44,.42)),
+    rgba(15,21,22,.97) !important;
+  border-color:rgba(123,174,181,.76) !important;
+  box-shadow:
+    inset 4px 0 0 rgba(126,181,188,.88),
+    0 3px 10px rgba(0,0,0,.34) !important;
+}
+.mini-fighter.enemy,
+button.mini-fighter.enemy{
+  background:
+    linear-gradient(180deg,rgba(137,49,43,.38),rgba(61,24,21,.44)),
+    rgba(26,16,15,.98) !important;
+  border-color:rgba(211,101,91,.80) !important;
+  box-shadow:
+    inset -4px 0 0 rgba(211,88,78,.92),
+    0 3px 10px rgba(0,0,0,.36) !important;
+}
+.mini-fighter.our .mini-name strong{color:#e1f1f1 !important}
+.mini-fighter.enemy .mini-name strong{color:#f6d6d2 !important}
+
+.mini-fighter.me,
+button.mini-fighter.me{
+  background:
+    linear-gradient(180deg,rgba(151,123,49,.32),rgba(48,39,20,.38)),
+    rgba(25,22,16,.98) !important;
+  border:2px solid rgba(224,188,79,.98) !important;
+  box-shadow:
+    inset 4px 0 0 rgba(224,188,79,.92),
+    0 0 0 2px rgba(224,188,79,.16),
+    0 4px 12px rgba(0,0,0,.38) !important;
+}
+.mini-fighter.me .mini-name strong{color:#f2e0a7 !important}
+
+.mini-fighter.enemy.selected,
+button.mini-fighter.enemy.selected{
+  outline:2px solid #f08a7e !important;
+  outline-offset:1px;
+  border-color:#e46559 !important;
+  box-shadow:
+    inset -4px 0 0 #dc584d,
+    0 0 0 2px rgba(224,101,89,.22),
+    0 0 15px rgba(176,39,31,.38) !important;
+}
+
+.faction-mark{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:14px;height:12px;
+  padding:0 !important;
+  border-radius:2px;
+  font-family:var(--body) !important;
+  font-size:7px !important;
+  font-weight:900 !important;
+  line-height:1;
+}
+.faction-mark.our{
+  color:#e8f7f7 !important;
+  background:rgba(67,111,117,.82);
+  border:1px solid rgba(143,194,199,.62);
+}
+.faction-mark.enemy{
+  color:#ffe5e1 !important;
+  background:rgba(139,49,42,.86);
+  border:1px solid rgba(222,108,98,.68);
+}
+.faction-mark.me-mark{
+  color:#211b0d !important;
+  background:#d4af45;
+  border:1px solid #f2da80;
+}
+.contact-mark{opacity:.88}
+
+/* v17.4 · 징가 목적지 선택 */
+.ginga-ghost-card{
+ position:absolute;z-index:29;transform:translate(-50%,-50%);
+ width:var(--mini-w,76px);height:var(--mini-h,58px);
+ border:1px solid rgba(243,200,98,.78);border-radius:4px;
+ background:rgba(41,32,17,.90);color:var(--paper);
+ box-shadow:0 0 0 2px rgba(243,200,98,.12),0 6px 18px rgba(0,0,0,.34);
+ cursor:pointer;font-family:var(--body)!important;
+}
+.ginga-ghost-card b{display:block;font-size:10.5px;color:#f5d76f}
+.ginga-ghost-card small{display:block;margin-top:3px;font-size:8px;color:#d9cb93}
+.ginga-ghost-card[data-arc="rear"]{border-color:rgba(231,104,82,.86);background:rgba(62,28,22,.92)}
+.ginga-ghost-card[data-arc="rear"] b{color:#ffb09f}
+.tactical-board.ginga-mode{box-shadow:inset 0 0 0 2px rgba(243,200,98,.48)}
+.brawlskills button.move-on{border-color:#f3c862;box-shadow:0 0 0 1px rgba(243,200,98,.25) inset;color:#f3c862}
+.ginga-ghost-card{pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:rgba(243,200,98,.18)}
+
+
+/* v17.7 · 카드 부상/다운/스턴 가시성 */
+.mini-name{
+  display:flex!important;align-items:center;gap:3px;min-width:0;
+}
+.mini-name strong{
+  flex:1 1 auto;min-width:0;width:auto!important;
+}
+.injury-marker{
+  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:12px;height:12px;border-radius:3px;
+  font-family:var(--body)!important;font-size:10px!important;font-weight:900!important;line-height:1;
+  background:rgba(20,18,15,.74);border:1px solid currentColor;
+  text-shadow:0 1px 1px rgba(0,0,0,.65);
+}
+.injury-marker.minor{color:#e3b84f}
+.injury-marker.major{color:#ef655b}
+.name-state{
+  flex:0 0 auto;display:inline-flex;align-items:center;height:12px;padding:0 3px;border-radius:2px;
+  font-family:var(--body)!important;font-size:7px!important;font-weight:900!important;line-height:12px;white-space:nowrap;
+  border:1px solid rgba(255,255,255,.18);background:rgba(9,9,9,.58);
+}
+.name-state.down{color:#f0c76b;border-color:rgba(240,199,107,.48)}
+.name-state.stun{color:#f08a7e;border-color:rgba(240,138,126,.52)}
+.fighter-name-line{display:flex;align-items:center;gap:5px;min-width:0;margin-bottom:1px}
+.fighter-name-line>b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fighter-name-line .injury-marker{width:14px;height:14px;font-size:11px!important}
+.fighter-name-line .name-state{height:14px;line-height:14px;font-size:8px!important;padding:0 4px}
+@media(max-width:760px){
+  .mini-name{gap:2px}
+  .injury-marker{width:11px;height:11px;font-size:9px!important}
+  .name-state{height:11px;line-height:11px;font-size:6.5px!important;padding:0 2px}
+}
+
+
+/* v17.12 · 카드별 개인 사기 깃발
+   공격 방향은 화살표, 사기는 전투 사기를 연상시키는 작은 깃발로 분리한다.
+   깃대는 12시→5시 방향으로 기울고, 색은 초록→빨강으로 변한다. */
+.morale-flag{
+  --morale-angle:0deg;--morale-color:#61d47b;
+  position:relative;display:inline-block;flex:0 0 auto;
+  width:13px;height:15px;margin-left:3px;
+  transform:rotate(var(--morale-angle));transform-origin:50% 55%;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.7));
+}
+.morale-flag-pole{
+  position:absolute;left:4px;top:1px;width:2px;height:13px;
+  border-radius:2px;background:var(--morale-color);
+}
+.morale-flag-cloth{
+  position:absolute;left:6px;top:1px;width:0;height:0;
+  border-top:4px solid transparent;border-bottom:4px solid transparent;
+  border-left:7px solid var(--morale-color);
+}
+.morale-flag.large{width:15px;height:17px;margin-left:4px}
+.morale-flag.large .morale-flag-pole{left:5px;height:15px}
+.morale-flag.large .morale-flag-cloth{left:7px;border-top-width:4.5px;border-bottom-width:4.5px;border-left-width:8px}
+@media(max-width:760px){
+  .morale-flag{width:12px;height:14px;margin-left:2px}
+  .morale-flag-pole{left:4px;height:12px}
+  .morale-flag-cloth{left:6px;border-top-width:3.5px;border-bottom-width:3.5px;border-left-width:6px}
+  .morale-flag.large{width:14px;height:16px;margin-left:3px}
+}
+
+
+/* v17.13 모바일 세로 레이아웃 / 로그 고정 가독성 */
+@media (max-width:760px){
+  /* Safari/HTML viewer의 브라우저 바를 제외한 실제 visualViewport 높이를 우선한다. */
+  .zoom{
+    height:var(--app-vh,100dvh);
+    max-height:var(--app-vh,100dvh);
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .zoomhead{flex:0 0 auto}
+  .zoombody{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+    padding:5px 6px calc(12px + env(safe-area-inset-bottom));
+  }
+  .mobile-brawl-layout{min-height:0}
+  .boardwrap,.controlrail{min-height:0}
+
+  /* 기존 카드 크기는 유지하면서 전장 높이만 살짝 줄여 하단 조작부에 공간을 돌린다. */
+  .tactical-board{
+    height:clamp(238px,36dvh,306px);
+    min-height:238px;
+    max-height:306px;
+  }
+  .boardtop{margin-bottom:3px}
+  .boardtactical{margin-bottom:3px;min-height:19px;padding:3px 6px}
+
+  .brawlstatus{margin:4px 0;gap:4px}
+  .brawlstatus div{padding:3px 2px}
+  .compactmission{margin:4px 0;max-height:44px;padding:4px 6px}
+
+  /* 모바일에서도 최근 전투 로그 2~4줄은 항상 보인다. */
+  .brawlfeed{
+    display:block;
+    box-sizing:border-box;
+    min-height:58px;
+    max-height:74px;
+    margin:4px 0 5px;
+    padding:4px 7px;
+    overflow-y:auto;
+    background:#0f0e0c;
+    border:1px solid rgba(214,204,182,.12);
+    font-size:9px;
+    line-height:1.34;
+    -webkit-overflow-scrolling:touch;
+  }
+  .brawlfeed div{padding:2px 0}
+
+  .brawlactions{gap:3px}
+  .brawlactions button{min-height:40px;padding:3px 2px}
+  .brawlactions b{font-size:10.5px}
+  .brawlskills{gap:3px;margin-top:5px}
+  .brawlskills button{min-height:40px;padding:4px 3px}
+  .brawlskills button b{font-size:10px}
+  .brawlskills button small{font-size:6.8px}
+}
+
+@media (max-width:380px){
+  .tactical-board{height:clamp(226px,34dvh,286px);min-height:226px;max-height:286px}
+  .brawlfeed{min-height:52px;max-height:64px;font-size:8.5px}
+  .brawlactions button,.brawlskills button{min-height:38px}
+}
+
+@media (orientation:landscape) and (max-height:560px){
+  .zoom{height:var(--app-vh,100dvh);max-height:var(--app-vh,100dvh)}
+  .zoombody{overflow-y:auto}
+  .tactical-board{height:calc(var(--app-vh,100dvh) - 105px);min-height:190px;max-height:none}
+  .brawlfeed{display:block;min-height:46px;max-height:58px;margin:3px 0;font-size:8px}
+}
+
+
+/* v17.14 · iOS 짧은 세로 뷰포트 압축 + 난전 로그 초기 표시 */
+@media (max-width:760px){
+  .zoombody{
+    /* 일부 iOS HTML 뷰어는 하단 툴바가 visualViewport 위에 겹친다. 끝까지 스크롤했을 때 버튼이 가려지지 않게 여유를 둔다. */
+    padding-bottom:calc(58px + env(safe-area-inset-bottom));
+  }
+  .tactical-board{
+    height:clamp(214px,calc(var(--app-vh,760px) * .34),278px);
+    min-height:214px;
+    max-height:278px;
+  }
+  .brawlfeed{
+    min-height:48px;
+    max-height:60px;
+    margin:3px 0 4px;
+    padding:4px 6px;
+  }
+  .brawlfeed:empty::before{content:"전투 기록 대기";color:var(--dim);font-size:8.5px}
+}
+
+html.vv-short .zoomhead{
+  padding:4px 7px;
+  gap:6px;
+  align-items:center;
+}
+html.vv-short .zoomhead h2{font-size:13.5px;line-height:1.05;margin:0}
+html.vv-short #zoomDesc{font-size:7.5px;line-height:1.15;margin-top:2px}
+html.vv-short .target-info-row{margin-top:2px!important;gap:4px}
+html.vv-short #targetInfo{font-size:7.5px;max-width:69vw}
+html.vv-short .target-detail-btn{min-height:24px;padding:2px 6px;font-size:7.5px}
+html.vv-short .pauseflag{font-size:7px;line-height:1.15;padding:3px 4px;max-width:88px;text-align:center}
+html.vv-short .zoombody{padding-top:3px}
+html.vv-short .boardtop{margin-bottom:2px}
+html.vv-short .boardtop b{font-size:11.5px}
+html.vv-short .boardcount{font-size:13px}
+html.vv-short .boardtactical{min-height:17px;padding:2px 5px;margin-bottom:3px;font-size:8px}
+html.vv-short .tactical-board{
+  height:clamp(202px,calc(var(--app-vh,700px) * .32),238px);
+  min-height:202px;
+  max-height:238px;
+}
+html.vv-short .brawlstatus{margin:3px 0}
+html.vv-short .brawlstatus div{padding:2px;font-size:7px}
+html.vv-short .brawlstatus strong{font-size:11px}
+html.vv-short .compactmission{margin:3px 0;max-height:38px;padding:3px 5px}
+html.vv-short .compactmission b{font-size:9px}
+html.vv-short .compactmission small{font-size:7px;line-height:1.25;margin-top:2px}
+html.vv-short .brawlfeed{min-height:44px;max-height:52px;font-size:8px;line-height:1.25}
+html.vv-short .brawlactions{gap:3px}
+html.vv-short .brawlactions button{min-height:36px;padding:2px}
+html.vv-short .brawlactions b{font-size:9.5px}
+html.vv-short .brawlskills{gap:3px;margin-top:4px}
+html.vv-short .brawlskills button{min-height:36px;padding:3px 2px}
+html.vv-short .brawlskills button b{font-size:9.2px}
+html.vv-short .brawlskills button small{font-size:6.2px}
+
+html.vv-very-short #zoomDesc{display:none}
+html.vv-very-short .zoomhead{padding-top:3px;padding-bottom:3px}
+html.vv-very-short .tactical-board{
+  height:198px;
+  min-height:198px;
+  max-height:198px;
+}
+html.vv-very-short .brawlfeed{min-height:40px;max-height:46px}
+html.vv-very-short .zoombody{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+
+
+/* v17.15 · 모바일 난전 지도 가로 확장 + 네이티브 좌우 팬
+   세로 화면에 모든 정보를 억지로 압축하지 않는다. 지도 자체를 읽기 좋은 크기로 유지하고
+   지도만 좌우 스크롤하며, 전체 난전 화면은 자연스러운 세로 스크롤로 접근한다. */
+.tactical-board-scroll{
+  position:relative;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(201,162,39,.42) rgba(214,204,182,.06);
+}
+.tactical-board-scroll::-webkit-scrollbar{height:4px}
+.tactical-board-scroll::-webkit-scrollbar-track{background:rgba(214,204,182,.05)}
+.tactical-board-scroll::-webkit-scrollbar-thumb{background:rgba(201,162,39,.38);border-radius:999px}
+
+@media (max-width:760px){
+  /* iOS HTML 뷰어 높이를 맞추려는 강제 100dvh 레이아웃을 중단한다.
+     zoomveil 자체가 스크롤 담당이 되어 브라우저 툴바가 있어도 하단 조작부에 도달 가능하다. */
+  .zoomveil{
+    overflow-y:auto;
+    overflow-x:hidden;
+    align-items:flex-start;
+    -webkit-overflow-scrolling:touch;
+  }
+  .zoom{
+    height:auto!important;
+    max-height:none!important;
+    min-height:100%;
+    overflow:visible!important;
+    display:block!important;
+  }
+  .zoombody{
+    overflow:visible!important;
+    height:auto!important;
+    max-height:none!important;
+    padding:5px 6px calc(84px + env(safe-area-inset-bottom))!important;
+  }
+  .mobile-brawl-layout{display:block!important;height:auto!important}
+  .boardwrap,.controlrail{min-height:0;overflow:visible}
+
+  .tactical-board-scroll{
+    margin:0 -1px 3px;
+    width:calc(100% + 2px);
+    touch-action:pan-x pan-y;
+    border-left:1px solid rgba(201,162,39,.14);
+    border-right:1px solid rgba(201,162,39,.14);
+  }
+  .tactical-board{
+    /* 실제 너비/높이는 JS가 격자 크기에 맞춰 px로 정한다. 기존 짧은 뷰포트 압축값은 무효화. */
+    min-height:330px!important;
+    max-height:none!important;
+    flex:0 0 auto;
+  }
+  .mini-fighter{touch-action:pan-x pan-y}
+
+  /* 지도를 넓혔으므로 로그/버튼을 더 이상 극단적으로 줄이지 않는다. */
+  .brawlfeed{
+    display:block!important;
+    min-height:68px!important;
+    max-height:96px!important;
+    margin:5px 0 6px!important;
+    padding:5px 7px!important;
+    font-size:9px!important;
+    line-height:1.34!important;
+  }
+  .brawlactions button,.brawlskills button{min-height:42px!important}
+}
+
+/* 이전 vv-short/vv-very-short 압축 규칙보다 우선한다. */
+@media (max-width:760px){
+  html.vv-short .tactical-board,
+  html.vv-very-short .tactical-board{
+    min-height:330px!important;
+    max-height:none!important;
+  }
+  html.vv-short .zoombody,
+  html.vv-very-short .zoombody{
+    padding-bottom:calc(84px + env(safe-area-inset-bottom))!important;
+  }
+  html.vv-short .brawlfeed,
+  html.vv-very-short .brawlfeed{
+    min-height:68px!important;
+    max-height:96px!important;
+  }
+}
+
+
+/* v17.16 · 가로 팬 지도 세로 여유 보정
+   실제 iPhone 화면에서 카드가 상하로 너무 촘촘해 보였던 부분만 완화한다.
+   가로 팬/세로 페이지 스크롤 구조는 그대로 유지한다. */
+@media (max-width:760px){
+  .tactical-board{
+    min-height:360px!important;
+    max-height:none!important;
+  }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div>
-    <h1>낭만시대 열전 · 패싸움/난전 실험실</h1>
-    <div class="sub">독립 프로토타입 v15.3a · 이동 턴 스코프 수정</div>
+<div class="game-shell">
+  <header class="game-header">
+    <div class="game-title">
+      <h1>낭만시대 열전</h1>
+      <span>패싸움</span>
+    </div>
+    <div class="game-head-right">
+      <div class="clock" id="clock">00:00</div>
+      <div class="game-actions">
+        <button class="game-btn primary" id="startBtn">전투 시작</button>
+        <button class="game-btn" id="pauseBtn">일시정지</button>
+        <button class="game-btn ghost" id="resetBtn">다시 시작</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="battle-main">
+    <section class="battle-surface">
+      <div class="battle-summary">
+        <div class="side-summary our-side">
+          <small>우리</small>
+          <b id="ourN">0</b>
+        </div>
+
+        <div class="flow-summary">
+          <div class="flowtrack"><i class="marker" id="marker"></i></div>
+          <strong class="flowtext" id="flowText">팽팽한 힘겨루기</strong>
+        </div>
+
+        <div class="side-summary enemy-side">
+          <small>상대</small>
+          <b id="enemyN">0</b>
+        </div>
+      </div>
+
+      <div class="battlefield-stage">
+        <div class="battlefield" id="battlefield"></div>
+
+        <div class="map-player-status" id="mapPlayerStatus">
+          <b>나</b><span>정상</span>
+        </div>
+
+        <button type="button" class="map-melee-btn" id="mapMeleeBtn" hidden>
+          난전 개입
+        </button>
+      </div>
+
+      <div class="map-legend">
+        <span><i class="dot me"></i>나</span>
+        <span><i class="dot our"></i>아군</span>
+        <span><i class="dot enemy"></i>적</span>
+      </div>
+
+      <section class="battle-log-inline">
+        <div class="battle-log-head">
+          <b>전투 상황</b>
+          <span>중요한 변화만 표시</span>
+        </div>
+        <div class="log" id="log"></div>
+      </section>
+    </section>
+
+    <details class="roster-drawer" id="rosterDetails">
+      <summary>
+        <span>현장 인물</span>
+        <small id="rosterSummary">우리 0 · 상대 0</small>
+      </summary>
+      <div class="roster-final" id="roster"></div>
+    </details>
+  </main>
+</div>
+
+<!--
+  프로토타입 실행/회귀검사용 DOM.
+  본게임 UI에서는 노출하지 않으며, 기존 엔진의 id 계약만 유지합니다.
+-->
+<div class="dev-hidden" aria-hidden="true">
+  <div class="scenarioBar">
+    <select id="scenarioSelect">
+      <option value="8x8_alley">8 vs 8 · 좁은 골목</option>
+      <option value="20x20_street" selected>20 vs 20 · 넓은 대로</option>
+      <option value="30x30_factory">30 vs 30 · 공장 단지</option>
+      <option value="50x50_port">50 vs 50 · 부두 일대</option>
+    </select>
+    <div id="modeSummary"></div>
   </div>
-  <div class="clock" id="clock">00:00</div>
-</header>
 
-<div class="scenarioBar">
- <select id="scenarioSelect">
-  <option value="8x8_alley">8 vs 8 · 좁은 골목</option>
-  <option value="20x20_street" selected>20 vs 20 · 넓은 대로</option>
-  <option value="30x30_factory">30 vs 30 · 공장 단지</option>
-  <option value="50x50_port">50 vs 50 · 부두 일대</option>
- </select>
- <div class="modeSummary" id="modeSummary">규모 엔진 준비 중</div>
-</div>
+  <button id="speedBtn">테스트 속도</button>
+  <button id="forceEventBtn">난전 사건 강제</button>
+  <button id="forceOrderBtn">강제 명령 시험</button>
+  <button id="statusTestBtn">상태 시험</button>
+  <button id="downTestBtn">다운 시험</button>
+  <button id="survivalTestBtn">생존 보정</button>
 
-<div class="controls">
- <button class="btn p" id="startBtn">전투 시작</button>
- <button class="btn" id="pauseBtn">수동 일시정지</button>
- <button class="btn" id="speedBtn">테스트 속도 ×4</button>
- <button class="btn" id="forceEventBtn">난전 사건 강제</button>
- <button class="btn" id="forceOrderBtn">강제 명령 시험</button>
- <button class="btn" id="statusTestBtn">맞장 상태 시험</button>
- <button class="btn" id="downTestBtn">다운/스턴 시험</button>
- <button class="btn on" id="survivalTestBtn">테스트 생존 보정 ON</button>
- <button class="btn" id="resetBtn">초기화</button>
-</div>
+  <span id="ourMorale"></span>
+  <span id="enemyMorale"></span>
 
-<div class="grid">
- <main>
-  <section class="panel">
-   <h2>전체 전장</h2>
-   <div class="pad">
-    <div class="topstats">
-      <div class="statbox">우리 조직<b id="ourN">24</b><small id="ourMorale">사기 72</small></div>
-      <div class="statbox">
-        <small>전황</small>
-        <div class="flowtrack"><i class="marker" id="marker"></i></div>
-        <div class="flowtext" id="flowText">팽팽</div>
-      </div>
-      <div class="statbox">상대 조직<b id="enemyN">27</b><small id="enemyMorale">사기 70</small></div>
-    </div>
-    <div class="battlefield" id="battlefield"></div>
-    <div class="legend">
-      <span><i class="dot me"></i>나</span><span><i class="dot our"></i>아군</span><span><i class="dot enemy"></i>적</span>
-      <span>● 바둑알은 장소별 실제 전장 좌표를 그대로 표시합니다.</span>
-    </div>
-    <div id="eventArea"></div>
+  <div id="eventArea"></div>
+  <div id="playerCard"></div>
 
-    <div class="diag-panel" id="diagPanel">
-      <div class="diag-head">
-        <b>전투 사이클 진단</b>
-        <small>좌표·이동·교전 누적값 / 현재값</small>
-      </div>
-      <div class="diag-grid">
-        <div class="diag-box"><span>이동 의도</span><strong id="dgIntent">0</strong><em id="dgMoveResult">성공 0 · 부분 0 · 차단 0</em></div>
-        <div class="diag-box"><span>평균 최근접 적 거리</span><strong id="dgNearest">-</strong><em id="dgPlayerNearest">플레이어 -</em></div>
-        <div class="diag-box"><span>현재 타격거리 안 쌍</span><strong id="dgContact">0</strong><em id="dgReadyContact">교전 준비 쌍 0</em></div>
-        <div class="diag-box"><span>자동교전 실행</span><strong id="dgResolve">0</strong><em id="dgCooldown">접촉 중 쿨다운 0</em></div>
-        <div class="diag-box"><span>실제 타격 hitNpc</span><strong id="dgHit">0</strong><em id="dgDamage">누적 피해 0</em></div>
-        <div class="diag-box"><span>다운 / KO</span><strong id="dgDownKo">0 / 0</strong><em id="dgAlive">잔존 -</em></div>
-        <div class="diag-box"><span>교전 판정 호출</span><strong id="dgExchange">0</strong><em id="dgReadyPairsCum">누적 준비쌍 0</em></div>
-        <div class="diag-box"><span>접촉→교전 실행률</span><strong id="dgRatio">-</strong><em id="dgBlocked">이동 차단률 -</em></div>
-      </div>
-      <div class="diag-player" id="dgPlayer">플레이어 진단 준비 중…</div>
-    </div>
-   </div>
-  </section>
- </main>
+  <button id="logBriefBtn"></button>
+  <button id="logDetailBtn"></button>
+  <span id="logModeLabel"></span>
 
- <aside>
-  <section class="panel">
-   <h2>내 상태 · 연속성</h2>
-   <div class="pad" id="playerCard"></div>
-  </section>
-  <section class="panel">
-   <h2>현장 인물</h2>
-   <div class="pad roster" id="roster"></div>
-  </section>
-  <section class="panel">
-   <h2>전투 연대기</h2>
-   <div class="logcontrols" style="display:flex;gap:6px;align-items:center;margin:6px 0 8px;flex-wrap:wrap">
-  <button id="logBriefBtn" class="mini">요약 로그</button>
-  <button id="logDetailBtn" class="mini ghost">상세 로그</button>
-  <span class="sub" id="logModeLabel">핵심 전황만 표시</span>
-</div>
-<div class="log" id="log"></div>
-  </section>
-  <section class="panel">
-   <h2>본편 이식 계약</h2>
-   <div class="pad"><div class="contract" id="contract"></div></div>
-  </section>
- </aside>
-</div>
+  <div id="diagPanel">
+    <span id="dgIntent"></span>
+    <span id="dgMoveResult"></span>
+    <span id="dgNearest"></span>
+    <span id="dgPlayerNearest"></span>
+    <span id="dgContact"></span>
+    <span id="dgReadyContact"></span>
+    <span id="dgResolve"></span>
+    <span id="dgCooldown"></span>
+    <span id="dgHit"></span>
+    <span id="dgDamage"></span>
+    <span id="dgDownKo"></span>
+    <span id="dgAlive"></span>
+    <span id="dgExchange"></span>
+    <span id="dgReadyPairsCum"></span>
+    <span id="dgRatio"></span>
+    <span id="dgBlocked"></span>
+    <span id="dgPlayer"></span>
+  </div>
+
+  <div id="contract"></div>
 </div>
 
 <div class="zoomveil" id="zoomveil" hidden>
  <div class="zoom">
   <div class="zoomhead">
-    <div><h2 id="zoomTitle">난전 불러오는 중…</h2><div class="sub" id="zoomDesc"></div><div class="sub" id="targetInfo" style="margin-top:5px;font-weight:800">현재 직접 상대 확인 중…</div></div>
+    <div><h2 id="zoomTitle">난전 불러오는 중…</h2><div class="sub" id="zoomDesc"></div>
+      <div class="sub target-info-row" style="margin-top:5px;font-weight:800">
+        <span id="targetInfo">현재 직접 상대 확인 중…</span>
+        <button type="button" id="targetDetailBtn" class="target-detail-btn">상세</button>
+      </div>
+    </div>
     <div class="pauseflag" id="pauseFlag">전체 전장 진행 중</div>
   </div>
   <div class="zoombody">
@@ -531,7 +1830,8 @@ h1{font-size:22px;letter-spacing:.11em}
           <div class="boardcount" id="boardCount">0 : 0</div>
         </div>
         <div class="boardtactical" id="boardTactical">전술 상황 계산 중…</div>
-        <div class="tactical-board" id="tacticalBoard">
+        <div class="tactical-board-scroll" id="tacticalBoardScroll" aria-label="난전 지도 · 좌우로 밀어서 이동">
+          <div class="tactical-board" id="tacticalBoard">
           <svg class="target-svg" id="targetSvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <marker id="targetArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
@@ -548,6 +1848,7 @@ h1{font-size:22px;letter-spacing:.11em}
           <div class="grid-backdrop" id="gridBackdrop"></div>
           <div id="boardCards"></div>
           <div class="boardoverflow" id="boardOverflow" hidden></div>
+          </div>
         </div>
         <!-- 기존 DOM id는 호환용으로 유지하되 화면에서는 사용하지 않음 -->
         <div id="zoomAllies" hidden></div>
@@ -561,6 +1862,7 @@ h1{font-size:22px;letter-spacing:.11em}
           <div>난전 턴<strong id="zTurn">0</strong></div>
         </div>
         <div class="missionbox compactmission" id="missionBox"></div>
+        <div class="brawlfeed" id="brawlFeed"></div>
         <div class="brawlactions">
           <button data-act="press"><b>파고든다</b><small>압박</small></button>
           <button data-act="trade"><b>정면승부</b><small>교환</small></button>
@@ -570,7 +1872,15 @@ h1{font-size:22px;letter-spacing:.11em}
           <button data-act="move"><b>이동</b><small>위치 변경</small></button>
           <button data-act="escape"><b>빠져나간다</b><small>이탈</small></button>
         </div>
-        <div class="brawlfeed" id="brawlFeed"></div>
+        <div class="brawlskills" id="brawlSkills">
+          <button data-act="ginga"><b>징가</b><small>목적지 선택</small></button>
+          <button data-act="shove"><b>밀어붙이기</b><small>상대 위치 밀기</small></button>
+          <button data-act="throw"><b>잡아넘기기</b><small>다운 · 스턴</small></button>
+          <button data-act="backkick"><b>뒷차기</b><small>직선 2칸</small></button>
+          <button data-act="jointlock"><b>관절기</b><small>반응 부상</small></button>
+          <button data-act="elbow"><b>엘보</b><small>시야 · 그로기</small></button>
+          <button data-act="kiai"><b>기합</b><small>광역 어그로</small></button>
+        </div>
       </section>
     </div>
   </div>
@@ -627,33 +1937,35 @@ const SCENARIOS={
  "8x8_alley":{
    label:"8 vs 8 · 좁은 골목",mode:"single",modeLabel:"단일 난전",our:8,enemy:8,target:[180,300],
    localRadius:28,entryRadius:28,viewRadius:28,combatRadius:10,seekRadius:34,personalSpace:3.7,
-   zones:[{id:"melee",name:"좁은 골목",space:{xMin:8,xMax:92,yMin:31,yMax:69,kind:"alley",logicalBase:14}}],playerZone:"melee"
+   zones:[{id:"melee",name:"좁은 골목",space:{xMin:8,xMax:92,yMin:31,yMax:69,kind:"alley",logicalBase:14,
+     meleeFootprint:{shape:"rounded_rect",cols:7,rows:5,cornerCut:0,label:"좁은 골목"}}}],playerZone:"melee"
  },
  "20x20_street":{
    label:"20 vs 20 · 넓은 대로",mode:"single",modeLabel:"대형 난전",our:20,enemy:20,target:[300,450],
    localRadius:14,entryRadius:11,viewRadius:11,combatRadius:8.5,seekRadius:28,personalSpace:4.2,
-   zones:[{id:"melee",name:"넓은 대로",space:{xMin:8,xMax:92,yMin:8,yMax:92,kind:"street",logicalBase:16}}],playerZone:"melee"
+   zones:[{id:"melee",name:"넓은 대로",space:{xMin:8,xMax:92,yMin:8,yMax:92,kind:"street",logicalBase:16,
+     meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"넓은 대로"}}}],playerZone:"melee"
  },
  "30x30_factory":{
    label:"30 vs 30 · 공장 단지",mode:"fronts",modeLabel:"정식 패싸움",our:30,enemy:30,target:[360,510],
    localRadius:25,entryRadius:25,viewRadius:22,combatRadius:9,seekRadius:30,personalSpace:3.8,
    zones:[
-    {id:"gate",name:"정문",space:{xMin:8,xMax:92,yMin:26,yMax:74,kind:"gate",logicalBase:14}},
-    {id:"yard",name:"주차장",space:{xMin:8,xMax:92,yMin:8,yMax:92,kind:"yard",logicalBase:16}},
-    {id:"warehouse",name:"창고 앞",space:{xMin:8,xMax:92,yMin:18,yMax:82,kind:"warehouse",logicalBase:15}},
-    {id:"rear",name:"뒷골목",space:{xMin:8,xMax:92,yMin:32,yMax:68,kind:"alley",logicalBase:14}}
+    {id:"gate",name:"정문",space:{xMin:8,xMax:92,yMin:26,yMax:74,kind:"gate",logicalBase:14,meleeFootprint:{shape:"rounded_rect",cols:7,rows:5,cornerCut:0,label:"정문 병목"}}},
+    {id:"yard",name:"주차장",space:{xMin:8,xMax:92,yMin:8,yMax:92,kind:"yard",logicalBase:16,meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"주차장"}}},
+    {id:"warehouse",name:"창고 앞",space:{xMin:8,xMax:92,yMin:18,yMax:82,kind:"warehouse",logicalBase:15,meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"창고 앞"}}},
+    {id:"rear",name:"뒷골목",space:{xMin:8,xMax:92,yMin:32,yMax:68,kind:"alley",logicalBase:14,meleeFootprint:{shape:"rounded_rect",cols:7,rows:5,cornerCut:0,label:"뒷골목"}}}
    ],playerZone:"yard"
  },
  "50x50_port":{
    label:"50 vs 50 · 부두 일대",mode:"fronts",modeLabel:"대규모 패싸움",our:50,enemy:50,target:[480,600],
    localRadius:24,entryRadius:24,viewRadius:20,combatRadius:9,seekRadius:29,personalSpace:3.6,
    zones:[
-    {id:"entrance",name:"부두 입구",space:{xMin:8,xMax:92,yMin:30,yMax:70,kind:"gate",logicalBase:14}},
-    {id:"dockA",name:"1번 선착장",space:{xMin:8,xMax:92,yMin:14,yMax:86,kind:"dock",logicalBase:16}},
-    {id:"dockB",name:"2번 선착장",space:{xMin:8,xMax:92,yMin:14,yMax:86,kind:"dock",logicalBase:16}},
-    {id:"yard",name:"야적장",space:{xMin:8,xMax:92,yMin:8,yMax:92,kind:"yard",logicalBase:17}},
-    {id:"warehouse",name:"창고 구역",space:{xMin:8,xMax:92,yMin:20,yMax:80,kind:"warehouse",logicalBase:15}},
-    {id:"rear",name:"후문 도로",space:{xMin:8,xMax:92,yMin:33,yMax:67,kind:"road",logicalBase:14}}
+    {id:"entrance",name:"부두 입구",space:{xMin:8,xMax:92,yMin:30,yMax:70,kind:"gate",logicalBase:14,meleeFootprint:{shape:"rounded_rect",cols:7,rows:5,cornerCut:0,label:"부두 입구"}}},
+    {id:"dockA",name:"1번 선착장",space:{xMin:8,xMax:92,yMin:14,yMax:86,kind:"dock",logicalBase:16,meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"1번 선착장"}}},
+    {id:"dockB",name:"2번 선착장",space:{xMin:8,xMax:92,yMin:14,yMax:86,kind:"dock",logicalBase:16,meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"2번 선착장"}}},
+    {id:"yard",name:"야적장",space:{xMin:8,xMax:92,yMin:8,yMax:92,kind:"yard",logicalBase:17,meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"야적장"}}},
+    {id:"warehouse",name:"창고 구역",space:{xMin:8,xMax:92,yMin:20,yMax:80,kind:"warehouse",logicalBase:15,meleeFootprint:{shape:"rounded_rect",cols:7,rows:7,cornerCut:1,label:"창고 구역"}}},
+    {id:"rear",name:"후문 도로",space:{xMin:8,xMax:92,yMin:33,yMax:67,kind:"road",logicalBase:14,meleeFootprint:{shape:"rounded_rect",cols:7,rows:5,cornerCut:0,label:"후문 도로"}}}
    ],playerZone:"yard"
  }
 };
@@ -692,6 +2004,68 @@ function zoneGeometryLabel(zoneId){
  const s=zoneSpace(zoneId),sp=spaceSpan(s);
  const kindMap={alley:"좁은 통로",street:"넓은 대로",gate:"병목",yard:"개방 공간",warehouse:"중간 폭",dock:"넓은 부두",road:"좁은 도로",open:"개방"};
  return `${kindMap[s.kind]||s.kind} · ${Math.round(sp.w)}×${Math.round(sp.h)}`;
+}
+
+/* v17.2 — 장소별 난전 footprint.
+   설정이 없는 장소는 기존 원형 바운더리를 그대로 사용한다. */
+function meleeFootprintSpec(zoneId,radius=null,cellSize=null){
+ const s=zoneSpace(zoneId);
+ const raw=s.meleeFootprint||null;
+ const r=radius??(typeof meleeBoundaryRadius==="function"?meleeBoundaryRadius():11);
+ const cs=cellSize??(typeof meleeGridCellSize==="function"?meleeGridCellSize():4.35);
+ const legacyHalf=Math.ceil(r/cs);
+
+ if(raw?.shape==="rounded_rect"){
+   const cols=Math.max(3,raw.cols|0||legacyHalf*2+1);
+   const rows=Math.max(3,raw.rows|0||legacyHalf*2+1);
+   return {
+     shape:"rounded_rect",label:raw.label||s.kind,
+     cols,rows,halfCols:(cols-1)/2,halfRows:(rows-1)/2,
+     cornerCut:Math.max(0,raw.cornerCut|0||0)
+   };
+ }
+ return {
+   shape:"circle",label:s.kind,
+   cols:legacyHalf*2+1,rows:legacyHalf*2+1,
+   halfCols:legacyHalf,halfRows:legacyHalf,cornerCut:0
+ };
+}
+function meleeFootprintCellAllowed(spec,c,r){
+ if(!spec)return false;
+ if(c<0||r<0||c>=spec.cols||r>=spec.rows)return false;
+ const dc=Math.abs(c-spec.halfCols),dr=Math.abs(r-spec.halfRows);
+
+ if(spec.shape==="rounded_rect"){
+   if(spec.cornerCut>0){
+     const edgeX=spec.halfCols-(spec.cornerCut-.5);
+     const edgeY=spec.halfRows-(spec.cornerCut-.5);
+     if(dc>edgeX&&dr>edgeY)return false;
+   }
+   return true;
+ }
+ // 원형은 실제 월드 좌표 판정에서 최종 처리.
+ return true;
+}
+function meleeFootprintWorldInside(zoneId,cx,cy,x,y,radius,cellSize,margin=0){
+ const s=zoneSpace(zoneId);
+ if(x<s.xMin-margin||x>s.xMax+margin||y<s.yMin-margin||y>s.yMax+margin)return false;
+
+ const spec=meleeFootprintSpec(zoneId,radius,cellSize);
+ if(spec.shape==="rounded_rect"){
+   const hx=spec.halfCols*cellSize+margin;
+   const hy=spec.halfRows*cellSize+margin;
+   const dx=Math.abs(x-cx),dy=Math.abs(y-cy);
+   if(dx>hx||dy>hy)return false;
+
+   // 7x7 street의 네 모서리 셀만 잘라낸 둥근 사각형.
+   if(spec.cornerCut>0){
+     const cutX=Math.max(0,(spec.halfCols-spec.cornerCut+.5)*cellSize);
+     const cutY=Math.max(0,(spec.halfRows-spec.cornerCut+.5)*cellSize);
+     if(dx>cutX&&dy>cutY)return false;
+   }
+   return true;
+ }
+ return Math.hypot(x-cx,y-cy)<=radius+margin;
 }
 
 function generatedName(side,i){
@@ -820,7 +2194,10 @@ function regroupPoint(a){
  })[0];
 }
 const playerBase={id:"player",name:"나",side:"our",isMe:true,punch:68,agi:64,tough:67,int:58,vit:66,end:62,hp:170,sp:135,maxHp:170,maxSp:135,status:"active",zone:"melee",x:34,y:55,damageDealt:0,damageTaken:0,outs:0,statuses:[],injuryFlags:[],downs:0,stunned:0,mom:50,nextAutoAt:0,lastOpponent:null,facing:0,lastStrikeMeta:null,
- personality:{name:"냉정함",aggression:52,loyalty:46,discipline:76,caution:73}, anchorY:50, lastOpponent:null, order:{type:"engage",target:null},transit:null};
+ personality:{name:"냉정함",aggression:52,loyalty:46,discipline:76,caution:73},
+ // 프로토타입 플레이어만 난전 대표기 전부 보유. 본게임 이식 금지.
+ skills:["footwork","ginga","shove","throw","backkick","jointlock","elbow","kiai"], martialArt:"prototype_all",martialLevel:"테스트",martialUses:{},
+ anchorY:50, lastOpponent:null, order:{type:"engage",target:null},transit:null};
 let S=null,timer=null,lastReal=0,acc=0,zoom=null;
 let LOG_MODE="brief";
 let LOG_BUFFER=[];
@@ -831,7 +2208,7 @@ let DIAG=null;
 function newDiag(){
  return {
    startedAt:0,
-   movement:{intents:0,success:0,partial:0,blocked:0,blockReasons:{stationaryDest:0,stationaryPath:0,acceptedDest:0,acceptedPath:0,unknown:0}},
+   movement:{intents:0,success:0,partial:0,blocked:0,blockReasons:{stationaryDest:0,stationaryPath:0,overlapNotEscaping:0,acceptedDest:0,acceptedPath:0,unknown:0}},
    exchangeCalls:0,readyPairChecks:0,resolvePairs:0,hits:0,damage:0,downs:0,kos:0,hitTargets:{},
    live:{avgNearest:null,minNearest:null,contactPairs:0,readyContactPairs:0,cooldownActors:0,minHpPct:100,belowHalf:0,belowQuarter:0,mostHitTarget:0},
    player:{moveIntents:0,moveSuccess:0,moveBlocked:0,nearest:null,inContact:false,resolvePairs:0,hitsGiven:0,hitsTaken:0},
@@ -1076,7 +2453,7 @@ function actor(side,i,name){
   hp:RI(84,112),maxHp:0,sp:RI(78,108),maxSp:0,status:"active",
   zone:zonesBase[0].id,x:sideSpawnX(zonesBase[0].id,side),y:randomZoneY(zonesBase[0].id,3),
   damageDealt:0,damageTaken:0,outs:0,locked:false,statuses:[],injuryFlags:[],downs:0,stunned:0,mom:50,nextAutoAt:0,lastOpponent:null,
-  facing:side==="our"?0:Math.PI,lastStrikeMeta:null,
+  facing:side==="our"?0:Math.PI,lastStrikeMeta:null,skills:[],martialArt:null,martialLevel:"미수련",martialUses:{},
   personality:rollPersonality(), anchorY:50, lastOpponent:null, order:{type:"engage",target:null},transit:null
  };
 }
@@ -1127,6 +2504,23 @@ function init(){
      return;
    }
 
+   const placedByZone=new Map();
+   const minSep=Math.max(3.25,(cfg.personalSpace||3.8)*.92);
+
+   function placeWithSpacing(a,zone,padY){
+     const placed=placedByZone.get(zone)||[];
+     let best=null,bestNearest=-1;
+     for(let attempt=0;attempt<80;attempt++){
+       const pt={x:sideSpawnX(zone,side),y:randomZoneY(zone,padY)};
+       const nearest=placed.length?Math.min(...placed.map(q=>Math.hypot(pt.x-q.x,pt.y-q.y))):999;
+       if(nearest>bestNearest){bestNearest=nearest;best=pt}
+       if(nearest>=minSep){best=pt;break}
+     }
+     a.zone=zone;a.x=best.x;a.y=best.y;a.anchorY=a.y;
+     placed.push({x:a.x,y:a.y,id:a.id});
+     placedByZone.set(zone,placed);
+   }
+
    arr.forEach((a,i)=>{
      if(cfg.mode==="single"){
        a.zone=zonesBase[0].id;
@@ -1135,22 +2529,24 @@ function init(){
        a.anchorY=a.y;
      }else{
        if(a.isMe){
-         a.zone=cfg.playerZone||zonesBase[Math.floor(zonesBase.length/2)].id;
-         a.x=sideSpawnX(a.zone,"our");
-         a.y=randomZoneY(a.zone,4);a.anchorY=a.y;
+         const zone=cfg.playerZone||zonesBase[Math.floor(zonesBase.length/2)].id;
+         placeWithSpacing(a,zone,4);
          return;
        }
        let zi=i%zonesBase.length;
        if(Math.random()<.28)zi=C(zi+pick([-1,1]),0,zonesBase.length-1);
-       a.zone=zonesBase[zi].id;
-       a.x=sideSpawnX(a.zone,side);
-       a.y=randomZoneY(a.zone,3);
-       a.anchorY=a.y;
+       placeWithSpacing(a,zonesBase[zi].id,3);
      }
    });
  }
  placeSide(our,"our");placeSide(enemy,"enemy");
- [...our,...enemy].forEach(a=>{a.maxHp=a.maxHp||a.hp;a.maxSp=a.maxSp||a.sp});
+ [...our,...enemy].forEach(a=>{
+   a.maxHp=a.maxHp||a.hp;a.maxSp=a.maxSp||a.sp;
+   ensureSkills(a);ensureMartialUses(a);
+   // v17.4: 능력치가 높다는 이유만으로 무술 기술을 자동 지급하지 않는다.
+   // NPC는 프로토타입용 희소 무술 프로필을 별도로 배정한다.
+   if(!a.isMe)assignPrototypeMartialProfile(a);
+ });
 
  S={
   running:false,manualPause:false,forcedPause:false,speed:4,
@@ -1168,13 +2564,16 @@ function init(){
   zoneControl:Object.fromEntries(zonesBase.map(z=>[z.id,"contested"])),
   orderPending:null,orderQueue:[],orderSeq:0,
   lastPlayerPrompt:-999,recentExchanges:[],playerAuto:true,
+  duelOpportunity:null,duelCandidateId:null,duelCandidateSince:-999,lastDuelOpportunityAt:-999,
   sources:{our:{auto:0,street:0,collapse:0},enemy:{auto:0,street:0,collapse:0}},
-  ended:false,testSurvival:false,injuryCandidates:[],debugMissionIndex:0,collapsedToFinal:false,strikeSeq:0
+  ended:false,testSurvival:false,injuryCandidates:[],debugMissionIndex:0,collapsedToFinal:false,strikeSeq:0,
+  combatFx:[],fxSeq:0,
+  macroEvents:[],macroSeq:0,macroState:{zones:{},cooldowns:{},globalDominant:null}
  };
  diagReset();
  zoom=null;$("zoomveil").hidden=true;$("orderveil").hidden=true;
  $("log").innerHTML="";
- log(`${cfg.label} 준비 완료 · ${cfg.modeLabel} · 목표 교전시간 ${fmt(S.target)}.`,"gold");
+ log("전투 준비 완료.","gold","detail");
  if(cfg.mode==="single")log("상위 전선 화면 없이 전체 인원이 하나의 혼전 공간에서 싸웁니다. 플레이어 주변 클러스터만 직접 확대합니다.");
  else log(`${zonesBase.length}개 전선에서 실제 NPC들이 동시에 싸웁니다. 전선 장악 후 간부 재배치 명령이 발생합니다.`);
  render();
@@ -1252,7 +2651,7 @@ function beginPhase(reason="진입",preserveBoard=false){
    startedAt:S.elapsed,
    reason
  };
- log(`난전 국면 ${zoom.phaseNo} 시작 — ${zoom.phase.startOur}:${zoom.phase.startEnemy}, ${base}턴. (${reason})`,"gold","summary");
+ // 국면 번호/턴 제한은 내부 진행값이며 플레이어 연대기에 출력하지 않는다.
 }
 function phaseChangeMetrics(){
  if(!zoom||!zoom.phase){
@@ -1308,6 +2707,8 @@ function evaluatePhase(){
 }
 
 function applyIncomingDamage(target,dmg){
+  // 극진 기합의 1턴 불퇴: 맞아도 버티는 기술이지 무적이 아니다.
+  if(target?.kiaiGuardTurns>0)dmg*=0.70;
   // 프로토타입 검증용. 본편 이식 금지.
   if(target?.isMe && S.testSurvival){
     dmg*=0.52;
@@ -1404,8 +2805,71 @@ function positionalAttackOutcome(att,def,raw,type="brawl"){
  att.lastStrikeMeta=meta;
  return {damage,meta};
 }
+function combatFxNow(){
+ return (typeof performance!=="undefined"&&performance.now)?performance.now():Date.now();
+}
+const COMBAT_FX_GAP_MS=240;
+const COMBAT_FX_LIFE_MS=720;
+const COMBAT_FX_STACK_PX=17;
+function pushCombatFx(meta,damage){
+ if(!S||!meta)return;
+ const special=meta.arc==="side"||meta.arc==="rear"||meta.crit;
+ if(!special)return;
+ const def=S.actors?.find(a=>String(a.id)===String(meta.defenderId));
+ if(!def)return;
+ const posPct=Math.round(((POSITION_ATTACK_RULES[meta.arc]?.damage||1)-1)*100);
+ const bits=[];
+ if(meta.arc==="side")bits.push(`측면 +${posPct}%`);
+ else if(meta.arc==="rear")bits.push(`후방 +${posPct}%`);
+ if(meta.crit)bits.push("치명");
+ bits.push(`-${Math.max(0,Math.round(damage||0))}`);
+ const now=combatFxNow();
+ S.combatFx=S.combatFx||[];
+ S.combatFx=S.combatFx.filter(f=>now-(f.startAt??f.born)<(f.life||COMBAT_FX_LIFE_MS));
+ const same=S.combatFx.filter(f=>String(f.defenderId)===String(def.id)).sort((a,b)=>(a.startAt??a.born)-(b.startAt??b.born));
+ const lastStart=same.length?(same[same.length-1].startAt??same[same.length-1].born):null;
+ const startAt=lastStart==null?now:Math.max(now,lastStart+COMBAT_FX_GAP_MS);
+ const stack=same.length%3;
+ S.combatFx.push({
+   id:++S.fxSeq,born:now,startAt,stack,life:COMBAT_FX_LIFE_MS,
+   defenderId:def.id,zone:def.zone,x:def.x,y:def.y,
+   arc:meta.arc,crit:!!meta.crit,text:bits.join(" · ")
+ });
+ if(S.combatFx.length>36)S.combatFx.splice(0,S.combatFx.length-36);
+}
+function liveCombatFx(){
+ if(!S)return [];
+ const now=combatFxNow();
+ S.combatFx=(S.combatFx||[]).filter(f=>now-(f.startAt??f.born)<(f.life||COMBAT_FX_LIFE_MS));
+ return S.combatFx;
+}
+function fxHtml(f,left,top){
+ const now=combatFxNow(),start=f.startAt??f.born,elapsed=now-start;
+ const delay=-elapsed,lift=(f.stack||0)*COMBAT_FX_STACK_PX;
+ const cls=`combat-fx ${f.arc||"front"}${f.crit?" crit":""}`;
+ return `<span class="${cls}" style="left:${left}%;top:calc(${top}% - ${lift}px);animation-delay:${Math.round(delay)}ms">${f.text}</span>`;
+}
+function renderWorldCombatFx(field,zoneId){
+ if(!field)return;
+ for(const f of liveCombatFx()){
+   if(f.zone!==zoneId)continue;
+   field.insertAdjacentHTML("beforeend",fxHtml(f,f.x,f.y));
+ }
+}
+function renderLocalCombatFx(board,posMap){
+ if(!board||!zoom)return;
+ for(const f of liveCombatFx()){
+   const p=posMap?.get(f.defenderId);
+   if(!p)continue;
+   board.insertAdjacentHTML("beforeend",fxHtml(f,p.x,p.y));
+ }
+}
+
 function finalizeStrikeMeta(att,damage){
- if(att?.lastStrikeMeta)att.lastStrikeMeta.finalDamage=Math.max(0,damage||0);
+ if(att?.lastStrikeMeta){
+   att.lastStrikeMeta.finalDamage=Math.max(0,damage||0);
+   pushCombatFx(att.lastStrikeMeta,damage);
+ }
  return att?.lastStrikeMeta||null;
 }
 function strikeMetaInline(meta){
@@ -1443,6 +2907,8 @@ function log(msg,tone="",category="detail"){
    category==="summary" ||
    category==="system" ||
    category==="error" ||
+   category==="battle" ||
+   category==="major" ||
    /국면|난전|명령|전투이탈|도착|장악|붕괴|종료|런타임 오류|전체 패싸움/.test(msg);
 
  if(LOG_MODE==="brief"&&!important)return;
@@ -1452,7 +2918,7 @@ function appendLogRecord(rec){
  const el=$("log");
  if(!el)return;
  const div=document.createElement("div");
- div.className=`logline ${rec.tone||""}`;
+ div.className=`logline ${rec.tone||""} ${rec.category||"detail"}`;
  div.textContent=`[${fmt(rec.at)}] ${rec.msg}`;
  el.prepend(div);
  while(el.children.length>90)el.removeChild(el.lastChild);
@@ -1463,6 +2929,7 @@ function rebuildLog(){
  const items=LOG_BUFFER.filter(rec=>{
    if(LOG_MODE==="detail")return true;
    return rec.category==="summary"||rec.category==="system"||rec.category==="error"||
+     rec.category==="battle"||rec.category==="major"||
      /국면|난전|명령|전투이탈|도착|장악|붕괴|종료|런타임 오류|전체 패싸움/.test(rec.msg);
  });
  for(const rec of items.slice(-90))appendLogRecord(rec);
@@ -1476,6 +2943,123 @@ function setLogMode(mode){
  if(d)d.className=LOG_MODE==="detail"?"mini":"mini ghost";
  rebuildLog();
 }
+/* v17.5 — 무술 귀속 + 난전 대표기 공통 헬퍼
+   중요: 아래 NPC 무술 분포는 프로토타입에서 기술을 시험하기 위한 희소 배치다.
+   본게임 이식 시에는 이 랜덤 분포를 사용하지 않고 NPC 배경/수련 이력/이벤트 데이터를 source of truth로 사용한다. */
+const COMBAT_SKILLS={
+ footwork:{
+   id:"footwork",label:"풋워크",short:"풋",cost:0,martial:"boxing",
+   desc:"사람 둘 사이의 막힌 모서리도 대각선 빈칸으로 비집고 이동할 수 있다. 지형 모서리는 통과할 수 없다."
+ },
+ ginga:{
+   id:"ginga",label:"징가",short:"징",cost:16,martial:"capoeira",
+   desc:"인접 상대의 측면·후방 후보 칸을 직접 고른 뒤 그 위치에서 즉시 한 번 타격한다."
+ },
+ shove:{
+   id:"shove",label:"밀어붙이기",short:"밀",cost:18,martial:"wrestling",
+   desc:"뒤가 비어 있으면 피해 없이 한 칸 밀고 그 자리를 차지한다. 벽·장애물·다른 적과 충돌하면 충돌 피해를 준다."
+ },
+ throw:{
+   id:"throw",label:"잡아넘기기",short:"잡",cost:24,martial:"judo",
+   desc:"인접한 상대를 빈칸으로 넘겨 위치를 무너뜨리고 잠깐 행동을 봉쇄한다."
+ },
+ backkick:{
+   id:"backkick",label:"뒷차기",short:"뒤",cost:22,martial:"taekwondo",
+   desc:"가로·세로 직선 2칸까지 타격한다. 인접 적에게 맞히면 뒤가 비었을 때 한 칸 밀어낸다."
+ },
+ jointlock:{
+   id:"jointlock",label:"관절기",short:"관",cost:18,martial:"hapkido",uses:2,
+   desc:"한 턴 반응 자세. 근접 적이 공격하면 관절기로 받아 부상과 주변 기세 저하를 노린다. 패싸움 전체 2회."
+ },
+ elbow:{
+   id:"elbow",label:"엘보",short:"엘",cost:16,martial:"muaythai",
+   desc:"제자리 초근접 타격. 시야 흐림과 그로기 발생률이 높다."
+ },
+ kiai:{
+   id:"kiai",label:"기합",short:"합",cost:22,martial:"kyokushin",
+   desc:"주변 적의 시선과 공격 우선순위를 자신에게 돌리고 한 턴 불퇴 방어를 얻는다."
+ }
+};
+const MARTIAL_ARTS={
+ boxing:{label:"복싱",rarity:"basic",meleeSkill:"footwork"},
+ judo:{label:"유도",rarity:"basic",meleeSkill:"throw"},
+ taekwondo:{label:"태권도",rarity:"basic",meleeSkill:"backkick"},
+ hapkido:{label:"합기도",rarity:"basic",meleeSkill:"jointlock"},
+ capoeira:{label:"카포에이라",rarity:"rare",meleeSkill:"ginga"},
+ wrestling:{label:"레슬링",rarity:"rare",meleeSkill:"shove"},
+ muaythai:{label:"무에타이",rarity:"rare",meleeSkill:"elbow"},
+ kyokushin:{label:"극진가라데",rarity:"rare",meleeSkill:"kiai"}
+};
+const BASIC_MARTIAL_IDS=Object.keys(MARTIAL_ARTS).filter(id=>MARTIAL_ARTS[id].rarity==="basic");
+const RARE_MARTIAL_IDS=Object.keys(MARTIAL_ARTS).filter(id=>MARTIAL_ARTS[id].rarity==="rare");
+function ensureSkills(a){
+ if(!a)return [];
+ if(!Array.isArray(a.skills))a.skills=[];
+ return a.skills;
+}
+function hasSkill(a,id){return !!a&&ensureSkills(a).includes(id)}
+function grantSkill(a,id){
+ if(!a||!COMBAT_SKILLS[id])return false;
+ const skills=ensureSkills(a);if(!skills.includes(id))skills.push(id);return true;
+}
+function skillLabels(a){return ensureSkills(a).map(id=>COMBAT_SKILLS[id]?.label||id)}
+function skillSummary(a){const labels=skillLabels(a);return labels.length?labels.join(" · "):"없음"}
+function martialLabel(a){return MARTIAL_ARTS[a?.martialArt]?.label||"무술 없음"}
+function grantMartialRepresentativeSkill(a,martialId){
+ const art=MARTIAL_ARTS[martialId];if(!a||!art)return false;
+ a.martialArt=martialId;a.martialLevel=a.martialLevel||"수련자";
+ return grantSkill(a,art.meleeSkill);
+}
+function assignPrototypeMartialProfile(a){
+ if(!a||a.isMe)return;
+ a.martialArt=null;a.martialLevel="미수련";a.skills=[];
+ const roll=Math.random();
+ // 프로토타입용 희소 분포: 70% 무술 없음 / 26% 기본무술 / 4% 희귀무술.
+ // 본게임에서는 절대 이 난수표를 그대로 쓰지 않는다.
+ if(roll<.70)return;
+ const pool=roll<.96?BASIC_MARTIAL_IDS:RARE_MARTIAL_IDS;
+ const artId=pick(pool);
+ a.martialLevel="수련자";
+ grantMartialRepresentativeSkill(a,artId);
+}
+function ensureMartialUses(a){
+ if(!a)return {};
+ if(!a.martialUses||typeof a.martialUses!=="object")a.martialUses={};
+ return a.martialUses;
+}
+function skillUseLimit(id){return Number(COMBAT_SKILLS[id]?.uses||0)}
+function skillUsesLeft(a,id){
+ const limit=skillUseLimit(id);if(!limit)return Infinity;
+ const used=Number(ensureMartialUses(a)[id]||0);return Math.max(0,limit-used);
+}
+function consumeLimitedSkillUse(a,id){
+ const limit=skillUseLimit(id);if(!limit)return true;
+ const uses=ensureMartialUses(a);const used=Number(uses[id]||0);
+ if(used>=limit)return false;uses[id]=used+1;return true;
+}
+function baseSkillCost(id){return COMBAT_SKILLS[id]?.cost||0}
+function combatSkillCost(a,id){return Math.ceil(baseSkillCost(id)*(typeof statusCost==='function'?statusCost(a):1))}
+function canPayCombatSkill(a,id){return !!a&&hasSkill(a,id)&&a.sp>=combatSkillCost(a,id)&&skillUsesLeft(a,id)>0}
+function payCombatSkill(a,id){
+ const cost=combatSkillCost(a,id);if(!canPayCombatSkill(a,id))return false;
+ a.sp=C(a.sp-cost,0,a.maxSp);return cost;
+}
+function positionalSkillBias(a){
+ let v=1;
+ if(hasSkill(a,"footwork"))v*=1.18;
+ if(hasSkill(a,"ginga"))v*=1.42;
+ return v;
+}
+/* 구버전 호출 호환 */
+function footworkPositionBias(a){return positionalSkillBias(a)}
+if(typeof window!=="undefined")window.__NANGMAN_MARTIAL__=()=>{
+ const actors=(S?.actors||[]).filter(a=>!a.isMe),counts={none:0,basic:0,rare:0};
+ for(const a of actors){
+   const art=MARTIAL_ARTS[a.martialArt];
+   if(!art)counts.none++;else counts[art.rarity]=(counts[art.rarity]||0)+1;
+ }
+ return {counts,actors:actors.map(a=>({id:a.id,name:a.name,martialArt:a.martialArt||null,martial:martialLabel(a),level:a.martialLevel||"미수련",skills:[...ensureSkills(a)]}))};
+};
 /* v6 — 맞장(v87)과 동일한 TEMP_STATUS 스키마.
    난전 전용 effects[]를 만들지 않는다. statuses[]를 그대로 맞장에 넘길 수 있다. */
 const TEMP_STATUS={
@@ -1627,6 +3211,7 @@ function statusCounter(x){return (x.statuses||[]).reduce((m,z)=>m*(TEMP_STATUS[z
 function statusAnalysis(x){return (x.statuses||[]).reduce((s,z)=>s+(TEMP_STATUS[z.name]?.analysis||0),0)}
 function momCap(x){let c=100;for(const z of (x.statuses||[]))if(TEMP_STATUS[z.name]?.momCap)c=Math.min(c,TEMP_STATUS[z.name].momCap);return c}
 function tickStatus(x){
+ if((x.downUiTurns||0)>0)x.downUiTurns=Math.max(0,(x.downUiTurns||0)-1);
  if(!Array.isArray(x.statuses)||!x.statuses.length)return;
  x.statuses.forEach(s=>s.turns--);
  x.statuses=x.statuses.filter(s=>s.turns>0);
@@ -1662,6 +3247,21 @@ function knockStateText(a){
  if(a.status!=="active")return "전투이탈";
  if((a.stunned||0)>0)return `스턴 ${a.stunned}`;
  if((a.downs||0)>0)return `다운 ${a.downs}회`;
+ return "";
+}
+const TEMP_INJURY_STATUS_NAMES=new Set(["그로기","다리가 풀림","시야 흐림","숨이 참","주먹이 저림"]);
+function temporaryInjuryStatuses(a){
+ return (a?.statuses||[]).map(s=>typeof s==="string"?s:(s.name||s.id||"")).filter(n=>TEMP_INJURY_STATUS_NAMES.has(n));
+}
+function injuryUiSeverity(a){
+ if((a?.injuryFlags||[]).length)return "major"; // 전투 후 영구 후유증 후보가 될 수 있는 큰 부상
+ if(temporaryInjuryStatuses(a).length)return "minor"; // 몇 턴 뒤 회복되는 일시적 신체 이상
+ return null;
+}
+function injuryUiTitle(a){
+ const sev=injuryUiSeverity(a);
+ if(sev==="major")return `큰 부상 · 후유증 가능: ${[...new Set(a.injuryFlags||[])].join("/")}`;
+ if(sev==="minor")return `일시 부상: ${temporaryInjuryStatuses(a).join("/")}`;
  return "";
 }
 function fullStatusText(a){
@@ -1759,6 +3359,7 @@ function down(attacker,y,damage,type){
  diagDown();
  const oldX=y.x,oldY=y.y;
  y.downs=(y.downs||0)+1;
+ y.downUiTurns=Math.max(y.downUiTurns||0,2); // UI 전용: 현재 다운 직후를 이름 옆에 1행동창 정도 표시
  y.mom=C((y.mom??50)-14,0,momCap(y));
  log(`${y.name} 다운!`,y.side==="our"?"bad":"good");
 
@@ -1807,7 +3408,9 @@ function stunFreeAttack(attacker,target,source="auto"){
    target.status="out";
    attacker.outs++;
    S.sources[target.side][source==="brawl"?"street":"auto"]++;
-   log(`${target.name} 전투이탈.`,target.side==="our"?"bad":"good");
+   if(!announcePlayerCombatOut(attacker,target)){
+     log(`${target.name} 전투이탈.`,target.side==="our"?"bad":"good");
+   }
    diagKo();
    yieldGroundOnDown(attacker,target,oldX,oldY,"ko");
    return "ko";
@@ -1825,6 +3428,7 @@ function postInjury(x){
    else if(flag==="허리")out.push("고질적인 허리 통증");
    else if(flag==="갈비")out.push("호흡 후유증");
    else if(flag==="머리")out.push("만성 어지럼");
+   else if(flag==="관절")out.push("관절 후유증");
  }
  return out;
 }
@@ -1849,7 +3453,8 @@ function statusFromHit(type,damage){
    상태의 이름/효과/turn 스키마는 맞장과 동일하다. */
 function maybeTempStatus(attacker,target,damage,type){
  if(damage<7||target.status!=="active")return;
- const p=C(.035+Math.max(0,damage-7)*.018+staminaDefenseMods(target).status,.02,.38);
+ let p=C(.035+Math.max(0,damage-7)*.018+staminaDefenseMods(target).status,.02,.38);
+ if(target?.kiaiGuardTurns>0)p*=.52;
  if(Math.random()<p)addStatus(target,statusFromHit(type,damage));
 }
 function statusText(a){
@@ -1875,7 +3480,7 @@ function start(){
  if(S.ended)return;
  S.running=true;S.manualPause=false;lastReal=performance.now();
  if(!timer)timer=setInterval(loop,80);
- log("패싸움이 시작됐다. 전체 전장은 실시간으로 진행됩니다.","gold","system");
+ log("패싸움이 시작됐다.","gold","system");
  render();
 }
 function loop(){
@@ -1889,8 +3494,11 @@ function loop(){
    // 직접 난전 중에는 '기다린 현실시간'이 패싸움 시간으로 바뀌지 않는다.
    // 플레이어가 1턴을 소비할 때만 전체 월드를 정해진 tick만큼 전진시킨다.
    if(zoom){
+     // 난전은 턴제다. 현실시간 동안 상태가 변하지 않으므로
+     // 80ms마다 renderZoom으로 카드 DOM을 갈아끼우면 모바일 touch가 끊긴다.
+     // 실제 상태 변화/입력/resize 때만 renderZoom을 호출한다.
      acc=0;
-     render();
+     renderClock();
      return;
    }
 
@@ -1977,13 +3585,20 @@ function movementCandidateLegal(intent,x,y,stationary,accepted){
  }
 
  // 움직이지 않는 사람의 현 위치는 절대 점유 불가.
+ // 단, 이미 personal-space 안에서 시작했다면 더 멀어지는 이동으로 단계적 탈출을 허용한다.
  for(const b of stationary){
    if(b.id===intent.id||b.zone!==intent.actor.zone)continue;
-   if(Math.hypot(x-b.x,y-b.y)<body){diagReject(intent,"stationaryDest");return false;}
-   const pathD=segmentPointDistance(intent.sx,intent.sy,x,y,b.x,b.y);
-   // 출발부터 이미 붙어 있던 사람은 벗어나는 움직임을 허용.
    const startD=Math.hypot(intent.sx-b.x,intent.sy-b.y);
-   if(startD>body*.82 && pathD<body*.72)return false;
+   const endD=Math.hypot(x-b.x,y-b.y);
+
+   if(startD<body*.92){
+     if(endD<=startD+.10){diagReject(intent,"overlapNotEscaping");return false;}
+     continue;
+   }
+
+   if(endD<body){diagReject(intent,"stationaryDest");return false;}
+   const pathD=segmentPointDistance(intent.sx,intent.sy,x,y,b.x,b.y);
+   if(pathD<body*.72){diagReject(intent,"stationaryPath");return false;}
  }
  // 이미 승인된 고우선순위 이동의 목적지/경로와 충돌 금지.
  for(const r of accepted){
@@ -2158,7 +3773,7 @@ function tacticalMoveScore(a,x,y,target,foes,friends){
 
  // v15.3: 머리 좋은 NPC는 같은 접근거리라면 측면/후방 공격각을 조금 더 선호한다.
  if(target&&target.status==="active"&&target.zone===a.zone&&targetD<=reach*1.7){
-   score+=positionalOpportunityScoreAt(x,y,target,smart);
+   score+=positionalOpportunityScoreAt(x,y,target,smart*footworkPositionBias(a));
  }
 
  // 머리 좋은 인물일수록 숫자 열세 공간을 피하고 수적 우세 공간을 노린다.
@@ -2221,6 +3836,23 @@ function tacticalMoveScore(a,x,y,target,foes,friends){
  score+=stableTacticalNoise(a,`move:${Math.round(x*2)}:${Math.round(y*2)}`,8)*(1-smart*.72);
  return score;
 }
+function stuckEscapeAlternatives(a){
+ const body=movementBodyRadius();
+ const nearby=S.actors.filter(b=>
+   b.id!==a.id&&b.status==="active"&&!b.transit&&b.zone===a.zone&&
+   Math.hypot(a.x-b.x,a.y-b.y)<body*1.7
+ );
+ if(!nearby.length)return [];
+ const dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+ const step=1.55;
+ return dirs.map(([dx,dy])=>{
+   const l=Math.hypot(dx,dy)||1;
+   const pt=clampZonePoint(a.zone,a.x+dx/l*step,a.y+dy/l*step,.55);
+   const clearance=Math.min(...nearby.map(b=>Math.hypot(pt.x-b.x,pt.y-b.y)));
+   return {x:pt.x,y:pt.y,score:clearance};
+ }).sort((p,q)=>q.score-p.score).slice(0,4);
+}
+
 function chooseTacticalMoveIntent(a,foes){
  if(!foes.length)return null;
  const friends=sameZoneActive(a.side,a.zone);
@@ -2313,7 +3945,9 @@ function chooseTacticalMoveIntent(a,foes){
  const best=candidates[0];
  a.lastOpponent=target.id;
  const intent=intentToPoint(a,best.x,best.y,"engage");
- intent.alternatives=candidates.slice(1,7).map(c=>({x:c.x,y:c.y,score:c.score}));
+ const normalAlts=candidates.slice(1,7).map(c=>({x:c.x,y:c.y,score:c.score}));
+ const escapeAlts=(a.stuckTicks||0)>=12?stuckEscapeAlternatives(a):[];
+ intent.alternatives=[...escapeAlts,...normalAlts];
  return intent;
 }
 
@@ -2363,6 +3997,12 @@ function resolveWorldSpatialMovement(){
  const result=resolveMovementIntents(intents,snapshot);
  diagMovement(intents,result);
 
+ for(const intent of intents){
+   const a=intent.actor,r=result.get(intent.id);
+   if(r?.ok&&r.moved>=.20)a.stuckTicks=0;
+   else a.stuckTicks=(a.stuckTicks||0)+1;
+ }
+
  if(zoom?.pendingPlayerMove){
    const p=player(),r=result.get(p?.id);
    zoom.lastPlayerMoveResult=r||{ok:false,moved:0,reason:"blocked"};
@@ -2371,6 +4011,228 @@ function resolveWorldSpatialMovement(){
  return result;
 }
 
+/*
+ * v15.6 — 전체 패싸움용 거시 전황 이벤트
+ * 미시 타격 로그가 아니라 전선 변화만 지도 위에 올린다.
+ */
+function macroEventNow(){
+ return (typeof performance!=="undefined"&&performance.now)?performance.now():Date.now();
+}
+function ensureMacroState(){
+ if(!S)return null;
+ if(!S.macroState)S.macroState={zones:{},cooldowns:{},globalDominant:null};
+ if(!S.macroEvents)S.macroEvents=[];
+ return S.macroState;
+}
+function macroZoneName(zoneId){
+ return zonesBase.find(z=>z.id===zoneId)?.name||zoneId||"전체 전황";
+}
+function macroCooldownReady(zoneId,type,cooldown=12){
+ const st=ensureMacroState();if(!st)return false;
+ const key=`${zoneId||"global"}:${type}`;
+ const last=st.cooldowns[key]??-9999;
+ if(S.elapsed-last<cooldown)return false;
+ st.cooldowns[key]=S.elapsed;
+ return true;
+}
+function pushMacroEvent(zoneId,type,text,tier="normal",tone="",opts={}){
+ if(!S)return null;
+ ensureMacroState();
+ const cooldown=opts.cooldown??(tier==="major"?14:11);
+ if(!opts.force&&!macroCooldownReady(zoneId,type,cooldown))return null;
+ if(opts.force)S.macroState.cooldowns[`${zoneId||"global"}:${type}`]=S.elapsed;
+
+ const ev={
+   id:++S.macroSeq,born:macroEventNow(),at:S.elapsed,
+   life:tier==="major"?2050:1450,
+   zoneId:zoneId||null,type,tier,tone,text
+ };
+ S.macroEvents.push(ev);
+ if(S.macroEvents.length>28)S.macroEvents.splice(0,S.macroEvents.length-28);
+
+ const prefix=zoneId?`[${macroZoneName(zoneId)}] `:"[전체 전황] ";
+ log(prefix+text,tone,tier==="major"?"major":"battle");
+ return ev;
+}
+function liveMacroEvents(){
+ if(!S)return [];
+ const now=macroEventNow();
+ S.macroEvents=(S.macroEvents||[]).filter(e=>now-e.born<e.life);
+ return S.macroEvents;
+}
+function macroEventHtml(ev){
+ const age=Math.max(0,macroEventNow()-ev.born);
+ const cls=`macro-event-banner ${ev.tier||"normal"} ${ev.tone||""}`;
+ return `<div class="${cls}" style="animation-duration:${ev.life}ms;animation-delay:-${Math.round(age)}ms">${ev.text}</div>`;
+}
+function macroEventStillRelevant(ev){
+ if(!ev?.zoneId)return true;
+ if(ev.type!=="ourBreak"&&ev.type!=="enemyBreak")return true;
+ const br=zoneBreakthroughFlags(zoneMacroSnapshot(ev.zoneId));
+ return ev.type==="ourBreak"?br.our:br.enemy;
+}
+function renderZoneMacroEvent(field,zoneId){
+ if(!field)return;
+ const ev=[...liveMacroEvents()].reverse().find(e=>e.zoneId===zoneId&&macroEventStillRelevant(e));
+ if(ev)field.insertAdjacentHTML("beforeend",macroEventHtml(ev));
+}
+function renderGlobalMacroEvent(battlefield){
+ if(!battlefield)return;
+ const ev=[...liveMacroEvents()].reverse().find(e=>!e.zoneId);
+ if(ev)battlefield.insertAdjacentHTML("beforeend",`<div class="macro-global-wrap">${macroEventHtml(ev)}</div>`);
+}
+function median(values){
+ if(!values.length)return 0;
+ const a=[...values].sort((x,y)=>x-y),m=Math.floor(a.length/2);
+ return a.length%2?a[m]:(a[m-1]+a[m])/2;
+}
+function zoneMacroSnapshot(zoneId){
+ const ours=active("our").filter(a=>a.zone===zoneId&&!a.transit);
+ const enemies=active("enemy").filter(a=>a.zone===zoneId&&!a.transit);
+ const strength=arr=>arr.reduce((s,a)=>s+C(a.hp/Math.max(1,a.maxHp),.22,1),0);
+ const os=strength(ours),es=strength(enemies),sum=os+es;
+ const balance=sum?C((os-es)/sum,-1,1):0;
+ const band=balance>=.28?2:balance>=.12?1:balance<=-.28?-2:balance<=-.12?-1:0;
+ return {ours,enemies,os,es,balance,band};
+}
+function strongestSurroundInZone(zoneId){
+ const all=S.actors.filter(a=>a.status==="active"&&!a.transit&&a.zone===zoneId);
+ if(all.length<4)return null;
+ const radius=directAttackReach()*1.28;
+ let best=null;
+ for(const target of all){
+   const attackers=all.filter(a=>a.side!==target.side&&Math.hypot(a.x-target.x,a.y-target.y)<=radius);
+   if(attackers.length<3)continue;
+   const support=all.filter(a=>a.id!==target.id&&a.side===target.side&&Math.hypot(a.x-target.x,a.y-target.y)<=radius).length;
+   if(attackers.length<support+2)continue;
+   const score=attackers.length*2-support+(1-target.hp/Math.max(1,target.maxHp))*2;
+   if(!best||score>best.score)best={target,attackers:attackers.length,support,score};
+ }
+ return best;
+}
+function breakthroughCohesion(attackers,deep){
+ if(deep.length>=3)return true;
+ const r=directAttackReach()*2.0;
+ return deep.some(a=>attackers.some(b=>b.id!==a.id&&Math.hypot(a.x-b.x,a.y-b.y)<=r));
+}
+function sideBreakthroughPossible(attackers,defenders,deep,attStrength,defStrength){
+ if(attackers.length<3||defenders.length<3)return false;
+ // 패잔병/고립된 소수의 위치만으로 '후방 돌파'를 선언하지 않는다.
+ if(attStrength<defStrength*.34)return false;
+ if(attackers.length<Math.max(3,Math.ceil(defenders.length*.20)))return false;
+ const needDeep=Math.max(2,Math.ceil(attackers.length*.26));
+ if(deep.length<needDeep)return false;
+ return breakthroughCohesion(attackers,deep);
+}
+function zoneBreakthroughFlags(snap){
+ const ours=snap.ours,enemies=snap.enemies;
+ if(ours.length<3||enemies.length<3)return {our:false,enemy:false};
+ const enemyMid=median(enemies.map(a=>a.x));
+ const ourMid=median(ours.map(a=>a.x));
+ const margin=directAttackReach()*.50;
+ const ourDeep=ours.filter(a=>a.x>enemyMid+margin);
+ const enemyDeep=enemies.filter(a=>a.x<ourMid-margin);
+ let our=sideBreakthroughPossible(ours,enemies,ourDeep,snap.os,snap.es);
+ let enemy=sideBreakthroughPossible(enemies,ours,enemyDeep,snap.es,snap.os);
+ // 이미 한쪽이 압도적으로 우세한 전선에서는 반대편 소수의 침투를 '돌파'로 보지 않는다.
+ if(snap.band>=2)enemy=false;
+ if(snap.band<=-2)our=false;
+ return {our,enemy,ourDeep:ourDeep.length,enemyDeep:enemyDeep.length};
+}
+function trackGlobalMacroEvent(){
+ const st=ensureMacroState();if(!st)return;
+ const adv=C(S.advantage+(active("our").length-active("enemy").length)*2,-45,45);
+ const dominant=adv>=12?"our":adv<=-12?"enemy":null;
+ if(!dominant)return;
+ if(st.globalDominant&&st.globalDominant!==dominant){
+   pushMacroEvent(
+     null,"globalTurn",
+     dominant==="our"?"전세 역전 · 아군이 주도권을 되찾았다":"전세 역전 · 상대가 주도권을 가져갔다",
+     "major",dominant==="our"?"good":"bad",{cooldown:20}
+   );
+ }
+ st.globalDominant=dominant;
+}
+function trackMacroBattleEvents(){
+ if(!S||S.ended)return;
+ const st=ensureMacroState();if(!st)return;
+
+ for(const z of zonesBase){
+   const snap=zoneMacroSnapshot(z.id);
+   const zs=st.zones[z.id]||(st.zones[z.id]={
+     ready:false,band:0,dominant:null,breakOur:false,breakEnemy:false,
+     breakOurHold:0,breakEnemyHold:0,surroundId:null
+   });
+
+   if(!zs.ready){
+     zs.ready=true;zs.band=snap.band;
+     zs.dominant=snap.band>0?"our":snap.band<0?"enemy":null;
+     const br=zoneBreakthroughFlags(snap);
+     zs.breakOur=br.our;zs.breakEnemy=br.enemy;
+     continue;
+   }
+
+   const newDominant=snap.band>0?"our":snap.band<0?"enemy":null;
+   const changedSide=zs.dominant&&newDominant&&zs.dominant!==newDominant;
+
+   if(changedSide){
+     pushMacroEvent(
+       z.id,"zoneTurn",
+       newDominant==="our"?"전세 역전 · 아군이 다시 밀어붙인다":"전세 역전 · 우리 쪽이 밀리기 시작한다",
+       "major",newDominant==="our"?"good":"bad",{cooldown:18}
+     );
+   }else if(snap.band>=2&&zs.band<2){
+     pushMacroEvent(z.id,"ourStrong","적 전선이 흔들린다","normal","good",{cooldown:13});
+   }else if(snap.band===1&&zs.band<=0){
+     pushMacroEvent(z.id,"ourPush","아군이 밀어붙이기 시작한다","normal","good",{cooldown:11});
+   }else if(snap.band<=-2&&zs.band>-2){
+     pushMacroEvent(z.id,"enemyStrong","우리 전선이 크게 흔들린다","normal","bad",{cooldown:13});
+   }else if(snap.band===-1&&zs.band>=0){
+     pushMacroEvent(z.id,"enemyPush","우리 쪽이 조금씩 밀리기 시작한다","normal","bad",{cooldown:11});
+   }
+
+   if(newDominant)zs.dominant=newDominant;
+   zs.band=snap.band;
+
+   const br=zoneBreakthroughFlags(snap);
+   zs.breakOurHold=br.our?(zs.breakOurHold||0)+1:0;
+   zs.breakEnemyHold=br.enemy?(zs.breakEnemyHold||0)+1:0;
+   const ourConfirmed=zs.breakOurHold>=3;
+   const enemyConfirmed=zs.breakEnemyHold>=3;
+   if(ourConfirmed&&!zs.breakOur){
+     pushMacroEvent(z.id,"ourBreak","아군이 적 전선 뒤쪽까지 돌파했다","normal","good",{cooldown:16});
+   }
+   if(enemyConfirmed&&!zs.breakEnemy){
+     pushMacroEvent(z.id,"enemyBreak","상대가 우리 후방까지 돌파했다","normal","bad",{cooldown:16});
+   }
+   zs.breakOur=ourConfirmed;zs.breakEnemy=enemyConfirmed;
+
+   const surround=strongestSurroundInZone(z.id);
+   if(surround&&surround.target.id!==zs.surroundId){
+     pushMacroEvent(
+       z.id,"surround",
+       `${surround.target.name}이(가) ${surround.attackers}명에게 포위됐다`,
+       "normal",surround.target.side==="enemy"?"good":"bad",{cooldown:15}
+     );
+     zs.surroundId=surround.target.id;
+   }else if(!surround){
+     zs.surroundId=null;
+   }
+ }
+ trackGlobalMacroEvent();
+}
+function announcePlayerCombatOut(att,def){
+ if(!att||!def)return false;
+ if(def.isMe){
+   pushMacroEvent(def.zone,"playerOut","내가 전투이탈했다","major","bad",{force:true});
+   return true;
+ }
+ if(att.isMe){
+   pushMacroEvent(def.zone,"playerKo",`내가 ${def.name}을 전투이탈시켰다`,"major","good",{cooldown:4});
+   return true;
+ }
+ return false;
+}
 function worldSecond(){
  S.elapsed++;S.tick++;
 
@@ -2431,12 +4293,14 @@ function worldSecond(){
  updateZoneControl();
  maybeCollapseFrontsToFinalMelee();
  detectPlayerIncident();
+ updatePlayerDuelOpportunity();
 
  // 난전에서는 플레이어 한 턴이 끝날 때 worldSecond()가 압축 호출된다.
  // 참가자 변화는 별도 난입 판정이 아니라 실제 위치/AI 이동의 결과다.
  // NPC 개별 행동 합산 -> 전황
  if(S.tick%2===0)npcExchange();
  if(S.tick%7===0)moraleDrift();
+ trackMacroBattleEvents();
  if(S.elapsed>=S.target||!active("our").length||!active("enemy").length)finishBattle();
 }
 
@@ -2473,8 +4337,11 @@ function updateZoneControl(){
     const units=active("our").filter(a=>a.zone===z.id&&!a.transit);
     if(units.length){
       S.orderQueue.push({id:++S.orderSeq,zone:z.id,at:S.elapsed});
-      log(`${z.name} 장악 완료. 간부 재배치 명령이 필요하다.`,"gold");
+      pushMacroEvent(z.id,"controlOur","적 전선 붕괴 · 아군이 장악했다","major","good",{force:true});
+      log(`${z.name} 장악 후 간부 재배치 명령이 필요하다.`,"gold","summary");
     }
+  }else if(prev!=="enemy"&&next==="enemy"){
+    pushMacroEvent(z.id,"controlEnemy","우리 전선 붕괴 · 상대가 장악했다","major","bad",{force:true});
   }
  }
  if(!S.orderPending&&!zoom&&S.orderQueue.length)openNextOrder();
@@ -2600,7 +4467,14 @@ function localMeleeSnapshot(p,radius=null){
  if(zoom?.gridBattle)return gridMeleeCluster();
  const r=radius||meleeBoundaryRadius();
  if(!p||p.status!=='active')return {ours:[],enemies:[],zone:p?.zone||null,cx:p?.x||0,cy:p?.y||0,radius:r};
- const c=clusterAt(p.zone,p.x,p.y,r);ensureIn(c.ours,p);return c;
+
+ const cs=meleeGridCellSize();
+ const inside=a=>a.status==='active'&&!a.transit&&a.zone===p.zone&&
+   meleeFootprintWorldInside(p.zone,p.x,p.y,a.x,a.y,r,cs,0);
+ const ours=S.actors.filter(a=>a.side==='our'&&inside(a));
+ const enemies=S.actors.filter(a=>a.side==='enemy'&&inside(a));
+ ensureIn(ours,p);
+ return {ours,enemies,zone:p.zone,cx:p.x,cy:p.y,radius:r,footprint:meleeFootprintSpec(p.zone,r,cs)};
 }
 function brawlPromptEligible(c){
  const o=c.ours.filter(a=>a.status==='active').length;
@@ -2618,15 +4492,71 @@ function detectPlayerIncident(){
  if(S.elapsed-S.lastPlayerPrompt<6)return;
  const c=localMeleeSnapshot(p,meleeBoundaryRadius());if(!brawlPromptEligible(c))return;
  S.event={id:++S.eventSeq,kind:'local_melee',zone:p.zone,createdAt:S.elapsed,snapshotOur:c.ours.length,snapshotEnemy:c.enemies.length,centerX:p.x,centerY:p.y,title:'주변 교전이 하나의 난전으로 엉킨다',forced:false};
- S.lastPlayerPrompt=S.elapsed;log(`난전 확대 가능 — 고정 바운더리 안 ${c.ours.length}:${c.enemies.length}.`,'gold');
+ S.lastPlayerPrompt=S.elapsed;log('직접 개입 가능한 근접 교전이 생겼다.','gold','detail');
 }
 function maybeOpenPlayerEvent(a,b,zone){
  const p=player();if(S.event||zoom||S.orderPending||!p||p.status!=='active'||p.transit)return;
  if(!a.isMe&&!b.isMe)return;if(S.elapsed-S.lastPlayerPrompt<8)return;
  const c=localMeleeSnapshot(p,meleeBoundaryRadius());if(!brawlPromptEligible(c))return;
  S.event={id:++S.eventSeq,kind:'local_melee',zone:p.zone,createdAt:S.elapsed,snapshotOur:c.ours.length,snapshotEnemy:c.enemies.length,centerX:p.x,centerY:p.y,title:'주변 교전이 하나의 난전으로 엉킨다',forced:false};
- S.lastPlayerPrompt=S.elapsed;log(`난전 확대 가능 — 고정 바운더리 안 ${c.ours.length}:${c.enemies.length}.`,'gold');
+ S.lastPlayerPrompt=S.elapsed;log('직접 개입 가능한 근접 교전이 생겼다.','gold','detail');
 }
+
+/* v17.11 — 패싸움 속 1:1 맞장 '성립 조건' 엔진.
+   실제 v87 맞장 화면 연결은 C21.3에서 담당하고, 여기서는 세계 상태만 판정한다.
+   조건: 실제 교전 상대 + 근접거리 + 주변 제3자 부재 + 2초 이상 고립 유지. */
+function duelIsolationRadius(){
+ return directAttackReach()*2.0;
+}
+function duelIncidentCandidate(){
+ const p=player();
+ if(!p||p.status!=="active"||p.transit||zoom||S.orderPending)return null;
+ // 이미 다대다 난전이 성립하는 공간에서는 맞장보다 난전이 우선이다.
+ const cluster=localMeleeSnapshot(p,meleeBoundaryRadius());
+ if(brawlPromptEligible(cluster))return null;
+
+ const reach=directAttackReach()*1.35;
+ const reach2=reach*reach;
+ const iso=duelIsolationRadius(),iso2=iso*iso;
+ const enemies=active("enemy")
+   .filter(e=>!e.transit&&e.zone===p.zone&&(e.stunned||0)<=0&&dist2(p,e)<=reach2)
+   .sort((a,b)=>dist2(p,a)-dist2(p,b));
+
+ for(const e of enemies){
+   const engaged=recentExchangeBetween(p,e,10)||p.lastOpponent===e.id||e.lastOpponent===p.id;
+   if(!engaged)continue;
+   const third=S.actors.some(a=>a.status==="active"&&!a.transit&&a.zone===p.zone&&a.id!==p.id&&a.id!==e.id&&
+      (dist2(a,p)<=iso2||dist2(a,e)<=iso2));
+   if(third)continue;
+   return e;
+ }
+ return null;
+}
+function updatePlayerDuelOpportunity(){
+ if(!S||zoom||S.orderPending||S.event?.forced){
+   if(S){S.duelOpportunity=null;S.duelCandidateId=null;S.duelCandidateSince=-999;}
+   return null;
+ }
+ const e=duelIncidentCandidate();
+ if(!e){
+   S.duelOpportunity=null;S.duelCandidateId=null;S.duelCandidateSince=-999;
+   return null;
+ }
+ if(S.duelCandidateId!==e.id){
+   S.duelCandidateId=e.id;S.duelCandidateSince=S.elapsed;S.duelOpportunity=null;
+   return null;
+ }
+ // 한 순간 스쳐 지나간 1:1은 맞장 이벤트로 보지 않는다.
+ if(S.elapsed-S.duelCandidateSince<2)return null;
+ if(S.duelOpportunity?.enemyId===e.id)return S.duelOpportunity;
+ if(S.elapsed-S.lastDuelOpportunityAt<12)return null;
+ const p=player();
+ S.duelOpportunity={enemyId:e.id,zone:p?.zone||e.zone,createdAt:S.elapsed,title:`${e.name}과 1:1 맞장 상황`};
+ S.lastDuelOpportunityAt=S.elapsed;
+ log(`${e.name}과 주변이 갈라져 1:1 맞장 상황이 만들어졌다.`,"gold","summary");
+ return S.duelOpportunity;
+}
+
 function resolveAutoPair(a,b,zone){
  diagResolvedPair(a,b);
  let delta=0,type="brawl";
@@ -2762,15 +4692,54 @@ function npcExchange(){
    def.status="out";att.outs++;S.sources[def.side].auto++;
    S.morale[def.side]=C(S.morale[def.side]-RI(3,7),0,100);
    S.morale[att.side]=C(S.morale[att.side]+RI(1,4),0,100);
-   log(`${def.name} 전투이탈 — ${att.name}의 현장 교전 결과.`,def.side==="our"?"bad":"good");
+   if(!announcePlayerCombatOut(att,def)){
+     log(`${def.name} 전투이탈 — ${att.name}의 현장 교전 결과.`,def.side==="our"?"bad":"good");
+   }
    diagKo();
    if(!zoom?.gridBattle)yieldGroundOnDown(att,def,oldX,oldY,"ko");
  }
+}
+function personalMoraleRetreatChance(a){
+ if(!a||a.status!=="active"||a.isMe||a.locked||a.transit)return 0;
+ const mom=C(Number(a.mom??50),0,100);
+ // 12~2시는 개인 사기만으로 도주하지 않는다. 3시부터 아주 낮은 확률, 4~5시에서 본격 상승.
+ let chance=mom<10?.32:mom<20?.12:mom<30?.025:0;
+ if(chance<=0)return 0;
+ const hp=a.maxHp?C(a.hp/a.maxHp,0,1):1;
+ if(hp<.35)chance+=.07; else if(hp<.55)chance+=.03;
+ const team=C(Number(S.morale[a.side]??70),0,100);
+ if(team<20)chance+=.10; else if(team<35)chance+=.045;
+ const r=duelIsolationRadius?duelIsolationRadius():12, r2=r*r;
+ const friends=active(a.side).filter(x=>x.id!==a.id&&!x.transit&&x.zone===a.zone&&dist2(a,x)<=r2).length;
+ const enemySide=a.side==="our"?"enemy":"our";
+ const foes=active(enemySide).filter(x=>!x.transit&&x.zone===a.zone&&dist2(a,x)<=r2).length;
+ if(foes>=friends+2)chance+=.06;
+ const per=a.personality||{};
+ chance+=(C(Number(per.caution??50),0,100)-50)*.0010;
+ chance-=(C(Number(per.discipline??50),0,100)-50)*.00065;
+ chance-=(C(Number(per.aggression??50),0,100)-50)*.00045;
+ if(friends>0)chance-=(C(Number(per.loyalty??50),0,100)-50)*.00030;
+ return C(chance,.005,.65);
+}
+function maybePersonalMoraleRetreat(side){
+ const candidates=active(side).filter(a=>!a.isMe&&!a.locked&&!a.transit&&(a.mom??50)<30)
+   .map(a=>({a,chance:personalMoraleRetreatChance(a)}))
+   .filter(x=>x.chance>0).sort((x,y)=>y.chance-x.chance);
+ // 한 사기 체크에서 한 진영 최대 1명만 이탈시켜 연쇄 증발을 막는다.
+ for(const x of candidates){
+   if(Math.random()>=x.chance)continue;
+   const a=x.a;a.status="out";S.sources[side].collapse++;
+   log(`${a.name}이 기세가 완전히 꺾여 현장을 벗어났다.`,side==="our"?"bad":"good");
+   return a;
+ }
+ return null;
 }
 function moraleDrift(){
  const diff=active("our").length-active("enemy").length;
  S.morale.our=C(S.morale.our+(diff>0?.6:-.25)+S.advantage/120,0,100);
  S.morale.enemy=C(S.morale.enemy+(diff<0?.6:-.25)-S.advantage/120,0,100);
+ maybePersonalMoraleRetreat("our");
+ maybePersonalMoraleRetreat("enemy");
  if(S.morale.our<20)collapse("our");
  if(S.morale.enemy<20)collapse("enemy");
 }
@@ -2778,9 +4747,12 @@ function collapse(side){
  if(Math.random()>.18)return;
  const pool=active(side).filter(a=>!a.isMe&&!a.locked);
  if(!pool.length)return;
- const a=pick(pool);a.status="out";S.sources[side].collapse++;
- S.morale[side]=C(S.morale[side]+4,0,100);
- log(`${a.name}이 기세가 꺾여 현장을 벗어났다.`,side==="our"?"bad":"good");
+ // 팀 붕괴도 멀쩡한 12시 NPC를 랜덤 추첨하지 않고 개인 기세가 낮은 순으로 우선한다.
+ const ranked=[...pool].sort((a,b)=>(a.mom??50)-(b.mom??50));
+ const cutoff=Math.max(1,Math.ceil(ranked.length*.35));
+ const a=pick(ranked.slice(0,cutoff));a.status="out";S.sources[side].collapse++;
+ S.morale[side]=C(S.morale[side]+3,0,100);
+ log(`${a.name}이 무너진 전황을 견디지 못하고 현장을 벗어났다.`,side==="our"?"bad":"good");
 }
 function maybeEvent(){
  // v10: 난전 사건은 maybeOpenPlayerEvent() → detectPlayerIncident()에서만 발생한다.
@@ -2856,27 +4828,30 @@ function gridActorAt(c,r,ignoreId=null){
 }
 function gridWorldInside(g,x,y,margin=0){
  if(!g)return false;
- const zs=zoneSpace(g.zone);
- if(x<zs.xMin-margin||x>zs.xMax+margin||y<zs.yMin-margin||y>zs.yMax+margin)return false;
- return Math.hypot(x-g.centerX,y-g.centerY)<=g.radius+margin;
+ return meleeFootprintWorldInside(g.zone,g.centerX,g.centerY,x,y,g.radius,g.cellSize,margin);
 }
 function createMeleeGridBattle(p){
  const radius=meleeBoundaryRadius();
  const cellSize=meleeGridCellSize();
- const half=Math.ceil(radius/cellSize);
- const cols=half*2+1,rows=cols;
- const originX=p.x-half*cellSize,originY=p.y-half*cellSize;
+ const footprint=meleeFootprintSpec(p.zone,radius,cellSize);
+ const cols=footprint.cols,rows=footprint.rows;
+ const half=Math.max(footprint.halfCols,footprint.halfRows);
+ const originX=p.x-footprint.halfCols*cellSize;
+ const originY=p.y-footprint.halfRows*cellSize;
  const zs=zoneSpace(p.zone);
  const cells={};
+
  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+   if(!meleeFootprintCellAllowed(footprint,c,r))continue;
    const pt={x:originX+c*cellSize,y:originY+r*cellSize};
    if(pt.x<zs.xMin+.35||pt.x>zs.xMax-.35||pt.y<zs.yMin+.35||pt.y>zs.yMax-.35)continue;
-   if(Math.hypot(pt.x-p.x,pt.y-p.y)>radius+cellSize*.18)continue;
+
+   if(footprint.shape==="circle"&&Math.hypot(pt.x-p.x,pt.y-p.y)>radius+cellSize*.18)continue;
    cells[gridCellKey(c,r)]={c,r,x:pt.x,y:pt.y};
  }
  return {
-   zone:p.zone,centerX:p.x,centerY:p.y,radius,cellSize,half,cols,rows,originX,originY,cells,
-   actorCell:{},entryMiss:{},createdAt:S.elapsed
+   zone:p.zone,centerX:p.x,centerY:p.y,radius,cellSize,half,cols,rows,originX,originY,
+   footprint,cells,actorCell:{},entryMiss:{},createdAt:S.elapsed
  };
 }
 function gridNearestFreeCellToWorld(g,x,y,ignoreId=null){
@@ -2941,15 +4916,30 @@ function gridCellIsBoundary(c,r){
  if(!gridValidCell(g,c,r))return false;
  return [[1,0],[-1,0],[0,1],[0,-1]].some(([dc,dr])=>!gridValidCell(g,c+dc,r+dr));
 }
+function gridDiagonalBodyBlock(a,c,r){
+ const g=zoom?.gridBattle,from=gridCellOfActor(a);
+ if(!g||!from)return {diagonal:false,terrainBlocked:false,sideA:false,sideB:false,doubleBody:false};
+ const dc=c-from.c,dr=r-from.r;
+ if(dc===0||dr===0)return {diagonal:false,terrainBlocked:false,sideA:false,sideB:false,doubleBody:false};
+ const terrainBlocked=!gridValidCell(g,from.c+dc,from.r)||!gridValidCell(g,from.c,from.r+dr);
+ const sideA=!terrainBlocked&&!!gridActorAt(from.c+dc,from.r,a.id);
+ const sideB=!terrainBlocked&&!!gridActorAt(from.c,from.r+dr,a.id);
+ return {diagonal:true,terrainBlocked,sideA,sideB,doubleBody:sideA&&sideB};
+}
+function gridMoveUsesFootwork(a,c,r){
+ const block=gridDiagonalBodyBlock(a,c,r);
+ return !!(block.diagonal&&!block.terrainBlocked&&block.doubleBody&&hasSkill(a,"footwork"));
+}
+
 function gridMoveLegal(a,c,r){
  const g=zoom?.gridBattle,from=gridCellOfActor(a);if(!g||!from||!gridValidCell(g,c,r))return false;
  const dc=c-from.c,dr=r-from.r;
  if(Math.max(Math.abs(dc),Math.abs(dr))!==1)return false;
  if(gridActorAt(c,r,a.id))return false;
  if(dc!==0&&dr!==0){
-   // 대각선 코너 관통 금지: 두 직교 길이 모두 열려 있어야 한다.
-   if(!gridValidCell(g,from.c+dc,from.r)||!gridValidCell(g,from.c,from.r+dr))return false;
-   if(gridActorAt(from.c+dc,from.r,a.id)||gridActorAt(from.c,from.r+dr,a.id))return false;
+   const block=gridDiagonalBodyBlock(a,c,r);
+   if(block.terrainBlocked)return false;
+   if(block.doubleBody&&!hasSkill(a,"footwork"))return false;
  }
  return true;
 }
@@ -3000,6 +4990,10 @@ function gridCaptureVacatedCell(att,defCell){
 }
 function gridNearestEnemy(a){
  const foes=gridMembers(a.side==='our'?'enemy':'our');
+ if(a?.forcedTargetTurns>0&&a.forcedTargetId){
+   const forced=foes.find(x=>String(x.id)===String(a.forcedTargetId)&&x.status==='active');
+   if(forced)return forced;
+ }
  return foes.sort((x,y)=>gridDistance(a,x)-gridDistance(a,y)||dist2(a,x)-dist2(a,y))[0]||null;
 }
 function gridNpcMoveScore(a,cell,target){
@@ -3021,7 +5015,7 @@ function gridNpcMoveScore(a,cell,target){
  score+=(allyAdj-enemyAdj)*smart*4.5;
  if(newD===1)score+=7+smart*5;
  if(target&&target.status==="active"){
-   score+=positionalOpportunityScoreAt(cell.x,cell.y,target,smart);
+   score+=positionalOpportunityScoreAt(cell.x,cell.y,target,smart*footworkPositionBias(a));
  }
  score+=stableTacticalNoise(a,`grid:${cell.c}:${cell.r}`,2.5)*(1-smart*.5);
  return score;
@@ -3029,12 +5023,17 @@ function gridNpcMoveScore(a,cell,target){
 function gridAdjacentEnemies(a){
  return gridMembers(a.side==="our"?"enemy":"our").filter(e=>e.status==="active"&&gridAdjacent(a,e));
 }
+function gridNpcPotentialTargets(a){
+ const foes=gridMembers(a.side==="our"?"enemy":"our").filter(e=>e.status==="active");
+ return foes.filter(e=>gridAdjacent(a,e)||(hasSkill(a,"backkick")&&gridBackKickTargetable(a,e)));
+}
 function gridTargetPressureScore(att,target){
+ const forced=(att?.forcedTargetTurns>0&&String(att.forcedTargetId)===String(target.id))?100:0;
  const hpPressure=(1-target.hp/Math.max(1,target.maxHp))*5.5;
  const sticky=(att.lastOpponent===target.id||target.lastOpponent===att.id)?2.4:0;
  const playerValue=target.isMe?1.6:0;
  const surround=gridMembers(att.side).filter(f=>f.id!==att.id&&gridAdjacent(f,target)).length;
- return hpPressure+sticky+playerValue+Math.min(4,surround)*1.15
+ return forced+hpPressure+sticky+playerValue+Math.min(4,surround)*1.15
    +stableTacticalNoise(att,`grid-target:${target.id}`,0.5);
 }
 function gridNpcOneWayStrike(att,def,zone){
@@ -3104,14 +5103,14 @@ function gridNpcStep(spentActorId=null){
    .filter(a=>a.status==="active"&&!a.isMe)
    .sort((a,b)=>moveInitiative(b,"engage")-moveInitiative(a,"engage")||String(a.id).localeCompare(String(b.id)));
 
- let exchanges=0,assistHits=0,ourDamage=0,enemyDamage=0,sideHits=0,rearHits=0,crits=0;
+ let exchanges=0,assistHits=0,ourDamage=0,enemyDamage=0,sideHits=0,rearHits=0,crits=0,skillUses=0;
  const acted=new Set(spent);
  const touched=new Set();
 
  for(const a of actors){
    if(a.status!=="active"||acted.has(String(a.id)))continue;
 
-   const targets=gridAdjacentEnemies(a)
+   const targets=gridNpcPotentialTargets(a)
      .filter(t=>t.status==="active")
      .sort((x,y)=>gridTargetPressureScore(a,y)-gridTargetPressureScore(a,x)||String(x.id).localeCompare(String(y.id)));
    const target=targets[0];
@@ -3120,6 +5119,38 @@ function gridNpcStep(spentActorId=null){
    const aCell=gridCellOfActor(a),tCell=gridCellOfActor(target);
    const aHp=a.hp,tHp=target.hp;
    const targetAlreadyActed=acted.has(String(target.id))||target.isMe;
+
+   // 합기도 관절기 반응 자세: 근접 공격자가 들어오는 순간 먼저 판정한다.
+   if(gridAdjacent(a,target)&&target.jointLockReady){
+     const jr=tryJointLockReaction(target,a);
+     if(jr.triggered&&jr.success){
+       acted.add(String(a.id));touched.add(a);touched.add(target);skillUses++;
+       continue;
+     }
+   }
+
+   const skillId=gridNpcChooseSpaceSkill(a,target);
+   if(skillId){
+     const sr=executeNpcSpaceSkill(a,target,skillId);
+     if(sr.ok){
+       acted.add(String(a.id));
+       if(sr.control)acted.add(String(target.id));
+       touched.add(a);if(sr.control)touched.add(target);
+       skillUses++;
+       if(sr.damage>0)exchanges++;
+
+       const dmgToA=Math.max(0,aHp-a.hp),dmgToT=Math.max(0,tHp-target.hp);
+       if(a.side==="our"){ourDamage+=dmgToT;enemyDamage+=dmgToA}else{ourDamage+=dmgToA;enemyDamage+=dmgToT}
+       if(target.status!=="active")gridRemoveActor(target);
+       if(a.status!=="active")gridRemoveActor(a);
+       continue;
+     }
+   }
+
+   if(!gridAdjacent(a,target)){
+     // 2칸 뒷차기 후보였지만 기술을 쓰지 않았다면 일반 타격으로 순간 사거리 확장하지 않는다.
+     continue;
+   }
 
    if(!targetAlreadyActed){
      // 둘 다 아직 행동하지 않았다면 기존 자동교전의 상호 교환을 1회 사용.
@@ -3161,14 +5192,18 @@ function gridNpcStep(spentActorId=null){
  }
 
  touched.forEach(tickStatus);
+ // 반응/불퇴/기합 어그로는 한 번의 국지 행동창만 유지한다.
+ for(const x of gridMembers()){
+   x.jointLockReady=0;
+   x.kiaiGuardTurns=0;
+   if((x.forcedTargetTurns||0)>0)x.forcedTargetTurns=Math.max(0,x.forcedTargetTurns-1);
+   if(!(x.forcedTargetTurns>0))x.forcedTargetId=null;
+ }
  syncAllGridActorsWorld();
  refreshMeleeGridMembership();
 
- if(exchanges>0){
-   const posTxt=(sideHits||rearHits||crits)?` · 측면 ${sideHits} / 후방 ${rearHits} / 치명타 ${crits}`:"";
-   feed(`국지 NPC 행동 ${exchanges}회 · 협공 추가타 ${assistHits}${posTxt} · 아군이 준 피해 ${Math.round(ourDamage)} / 받은 피해 ${Math.round(enemyDamage)}`,"gold");
- }
- return {moves,exchanges,assistHits,ourDamage,enemyDamage,sideHits,rearHits,crits};
+ // 집계값은 내부 회귀검사/AI 진단용으로만 반환한다.
+ return {moves,exchanges,assistHits,ourDamage,enemyDamage,sideHits,rearHits,crits,skillUses};
 }
 function gridBestRetreatCell(a,threat){
  const opts=gridNeighborCells(a,false);if(!opts.length)return null;
@@ -3182,7 +5217,11 @@ function gridBestRetreatCell(a,threat){
 }
 function gridDebugSnapshot(){
  const g=zoom?.gridBattle;if(!g)return null;
- return {centerX:g.centerX,centerY:g.centerY,radius:g.radius,cellSize:g.cellSize,cols:g.cols,rows:g.rows,validCells:Object.keys(g.cells).length,actors:{...g.actorCell}};
+ return {
+   centerX:g.centerX,centerY:g.centerY,radius:g.radius,cellSize:g.cellSize,
+   cols:g.cols,rows:g.rows,footprint:g.footprint?.shape||"circle",
+   validCells:Object.keys(g.cells).length,actors:{...g.actorCell}
+ };
 }
 if(typeof window!=='undefined')window.__NANGMAN_GRID__=gridDebugSnapshot;
 /* v15.0 — 난전 진입: 월드 바운더리 → 고정 격자 */
@@ -3196,8 +5235,8 @@ function enterBrawl(){
    event:ev,finished:false,startedAt:S.elapsed,totalTurns:0,phaseNo:0,targetId:null,
    viewRadius:meleeBoundaryRadius(),context:ev.kind==='hold'?'hold':'clash',
    entrySnapshot:{at:S.elapsed,our:0,enemy:0,ids:[]},
-   lastWorldSummary:`난전 1턴 = 국지 격자 1회 + 전체 패싸움 ${LOCAL_TURN_WORLD_TICKS}틱`,
-   moveMode:false,reservedTargetId:null,pendingPlayerMove:null,
+   lastWorldSummary:"",
+   moveMode:false,reservedTargetId:null,pendingPlayerMove:null,boardScrollPrimed:false,
    gridBattle:null,boardGrid:null,logicalById:{},flowWatch:{stagnant:0,status:'정상',reason:'',last:null,history:[],runtimeError:null}
  };
  zoom.gridBattle=createMeleeGridBattle(p);
@@ -3208,8 +5247,12 @@ function enterBrawl(){
  zoom.targetId=gridNearestEnemy(p)?.id||c.enemies[0]?.id||null;
  S.playerAuto=false;S.forcedPause=false;S.event=null;
  $('zoomveil').hidden=false;
+ const localFeed=$('brawlFeed');if(localFeed)localFeed.innerHTML='';
  beginPhase('고정 바운더리 격자 생성');
- log(`난전 격자 생성 — R${zoom.gridBattle.radius.toFixed(1)} · ${zoom.gridBattle.cols}×${zoom.gridBattle.rows} · 유효칸 ${Object.keys(zoom.gridBattle.cells).length} · 진입 ${c.ours.length}:${c.enemies.length}.`,'gold','summary');
+ log('난전에 직접 개입했다.','gold','summary');
+ const firstTarget=gridNearestEnemy(p)||c.enemies[0]||null;
+ feed(`난전 개입 — 우리 ${c.ours.length} : 상대 ${c.enemies.length}.`,'gold');
+ if(firstTarget)feed(`${firstTarget.name}과 교전 중 · 행동을 선택하세요.`);
  renderZoom();render();
 }
 function nearbyActiveAround(target,side,r=11){
@@ -3323,10 +5366,10 @@ function advanceLocalTurnWorld(ticks=LOCAL_TURN_WORLD_TICKS,reservedActorId=null
  const afterLocal=localTurnSnapshot(),afterFlow=flowCounterSnapshot();
  z.lastWorldSummary=summarizeLocalTurnWorld(beforeLocal,afterLocal,ticks);
  if(gridTurn){
-   z.lastWorldSummary+=` · 국지 이동 ${gridTurn.moves} / 행동 ${gridTurn.exchanges} / 협공 ${gridTurn.assistHits||0} / 측면 ${gridTurn.sideHits||0} / 후방 ${gridTurn.rearHits||0} / 치명타 ${gridTurn.crits||0}`;
+   // 개발 진단용 내부 텔레메트리. 플레이어 피드/연대기에는 출력하지 않는다.
+   z.lastWorldSummary+=` · 국지 이동 ${gridTurn.moves} / 행동 ${gridTurn.exchanges} / 협공 ${gridTurn.assistHits||0} / 측면 ${gridTurn.sideHits||0} / 후방 ${gridTurn.rearHits||0} / 치명타 ${gridTurn.crits||0} / 공간기술 ${gridTurn.skillUses||0}`;
  }
  updateFlowWatch(z,beforeFlow,afterFlow,ticks,runtimeError);
- feed(z.lastWorldSummary,'gold');log(z.lastWorldSummary,'gold','summary');
  if(runtimeError)feed(`진행 중 오류를 감지했습니다: ${runtimeError.message||runtimeError}`,'bad');
 }
 function directAttackReach(){
@@ -3345,7 +5388,7 @@ function playerMoveDistance(){
 }
 /* v15.0 — 난전 플레이어 이동: 격자 인접칸 */
 function setMoveMode(on){
- if(!zoom)return;zoom.moveMode=!!on;
+ if(!zoom)return;zoom.moveMode=!!on;if(zoom.moveMode)zoom.gingaMode=false;
  const board=$('tacticalBoard'),hint=$('moveHint'),layer=$('moveDestinations'),note=$('moveBlockedNote');
  if(board)board.classList.toggle('move-mode',zoom.moveMode);
  if(hint)hint.hidden=!zoom.moveMode;
@@ -3369,25 +5412,612 @@ function renderMoveDestinations(playerPos,posMap=null,actors=[]){
    if(!dc&&!dr)continue;const c=from.c+dc,r=from.r+dr;
    if(!gridMoveLegal(p,c,r)){blocked++;continue}
    const pos=gridCellBoardPosition(c,r,g);const ghost=document.createElement('button');
-   ghost.className='move-ghost-card';ghost.style.left=pos.x+'%';ghost.style.top=pos.y+'%';
+   const viaFootwork=gridMoveUsesFootwork(p,c,r);
+   ghost.className='move-ghost-card'+(viaFootwork?' footwork':'');ghost.style.left=pos.x+'%';ghost.style.top=pos.y+'%';
    const label=dc>0?(dr<0?'↗':dr>0?'↘':'→'):dc<0?(dr<0?'↖':dr>0?'↙':'←'):(dr<0?'↑':'↓');
-   ghost.dataset.c=c;ghost.dataset.r=r;ghost.dataset.dir=label;ghost.innerHTML=`<b>${label} 이동</b><small>1칸</small>`;
-   ghost.onclick=e=>{e.preventDefault();e.stopPropagation();consumePlayerGridMove(c,r)};layer.appendChild(ghost);legal++;
+   ghost.dataset.c=c;ghost.dataset.r=r;ghost.dataset.dir=label;ghost.dataset.footwork=viaFootwork?'1':'0';
+   ghost.innerHTML=viaFootwork?`<b>풋워크 ${label}</b><small>사이 비집기</small>`:`<b>${label} 이동</b><small>1칸</small>`;
+   layer.appendChild(ghost);legal++;
  }
- if(note&&blocked){note.hidden=false;note.textContent=legal?`점유/벽 때문에 ${blocked}방향 제한`:'주변에 이동 가능한 칸이 없음'}
+ if(note){
+   note.hidden=false;
+   note.textContent=legal?`이동 가능 ${legal}칸${blocked?` · 제한 ${blocked}방향`:''}`:'주변에 이동 가능한 칸이 없음';
+ }
 }
 function consumePlayerGridMove(c,r){
  if(!zoom?.moveMode||zoom.finished)return;const p=player();if(!p||!gridMoveLegal(p,c,r))return renderZoom();
+ const viaFootwork=gridMoveUsesFootwork(p,c,r);
  p.sp=C(p.sp-4*statusCost(p),0,p.maxSp);p.lastOpponent=null;zoom.totalTurns++;
  const before=gridCellOfActor(p);const ok=gridMoveActor(p,c,r);setMoveMode(false);
  if(!ok){feed('이동 실패 — 해당 칸이 막혔다.','bad');return renderZoom()}
- feed(`격자 이동 ${before.c},${before.r} → ${c},${r}.`,'gold');
+ feed(viaFootwork
+   ?`풋워크 — 사람 사이를 비집고 ${before.c},${before.r} → ${c},${r}.`
+   :`격자 이동 ${before.c},${before.r} → ${c},${r}.`,'gold');
  advanceLocalTurnWorld(LOCAL_TURN_WORLD_TICKS,null);return evaluatePhase();
 }
 function validatePlayerDestination(x,y){return {ok:false,reason:'v15 난전에서는 격자 이동만 사용'}}
 function destinationFromDirection(){return null}
 function safeApproachPlayer(){return 0}
 function safeRetreatFrom(){return 0}
+
+/* v17.5 — 카포에이라 징가 목적지 선택 + 즉시 타격 */
+function setGingaMode(on){
+ if(!zoom)return;
+ zoom.gingaMode=!!on;
+ if(zoom.gingaMode)zoom.moveMode=false;
+ const board=$('tacticalBoard'),hint=$('moveHint'),layer=$('moveDestinations'),note=$('moveBlockedNote');
+ if(board){board.classList.toggle('ginga-mode',zoom.gingaMode);board.classList.toggle('move-mode',!!zoom.moveMode)}
+ if(layer)layer.innerHTML='';
+ if(hint)hint.hidden=!zoom.gingaMode;
+ if(note&&!zoom.gingaMode)note.hidden=true;
+ document.querySelectorAll('[data-act="ginga"]').forEach(b=>b.classList.toggle('move-on',zoom.gingaMode));
+ if(zoom.gingaMode){
+   feed('징가 — 측면·후방 후보 칸을 직접 선택합니다. 위험한 칸도 선택할 수 있습니다.','gold');
+   renderZoom();
+ }
+}
+function cancelGingaMode(){
+ if(!zoom?.gingaMode)return;
+ zoom.gingaMode=false;
+ const board=$('tacticalBoard'),layer=$('moveDestinations'),note=$('moveBlockedNote'),hint=$('moveHint');
+ if(board)board.classList.remove('ginga-mode');if(layer)layer.innerHTML='';if(note)note.hidden=true;if(hint)hint.hidden=true;
+ document.querySelectorAll('[data-act="ginga"]').forEach(b=>b.classList.remove('move-on'));
+}
+function renderGingaDestinations(){
+ const layer=$('moveDestinations'),note=$('moveBlockedNote');
+ if(!zoom?.gingaMode||!zoom.gridBattle||!layer)return;
+ const p=player(),target=currentBrawlTarget();if(!p||!target)return;
+ layer.innerHTML='';
+ const candidates=gridGingaCandidates(p,target);
+ for(const x of candidates){
+   const pos=gridCellBoardPosition(x.cell.c,x.cell.r,zoom.gridBattle);
+   const ghost=document.createElement('button');
+   ghost.className='ginga-ghost-card';ghost.style.left=pos.x+'%';ghost.style.top=pos.y+'%';
+   ghost.dataset.c=x.cell.c;ghost.dataset.r=x.cell.r;ghost.dataset.threat=x.threat;ghost.dataset.arc=x.arc.key;
+   ghost.innerHTML=`<b>${x.arc.label}</b><small>위협 ${x.threat}</small>`;
+   layer.appendChild(ghost);
+ }
+ if(note){note.hidden=false;note.textContent=candidates.length?`징가 후보 ${candidates.length}칸 · 위협도는 이동 후 인접한 적 수`:'징가로 이동할 측면·후방 빈칸이 없음'}
+}
+function consumePlayerGinga(c,r){
+ if(!zoom?.gingaMode||zoom.finished)return;
+ const p=player(),target=currentBrawlTarget();if(!p||!target)return renderZoom();
+ const candidate=gridGingaCandidates(p,target).find(x=>x.cell.c===c&&x.cell.r===r);
+ if(!candidate)return renderZoom();
+ const cost=combatSkillCost(p,'ginga');if(p.sp<cost)return renderZoom();
+ payCombatSkill(p,'ginga');zoom.totalTurns++;zoom.gingaMode=false;
+ const result=executeGinga(p,target,candidate.cell);
+ if(!result.ok){feed(result.reason||'징가 이동 실패.','bad');return renderZoom()}
+ const hitText=result.damage>0?` · 즉시 타격 ${Math.round(result.damage)} 피해${strikeMetaInline(result.meta)}`:' · 즉시 타격 피해 없음';
+ feed(`징가 — ${target.name}의 ${result.arc?.label||candidate.arc.label}으로 이동${hitText} · 위협 ${candidate.threat} · SP -${cost}.`,'gold');
+ tickStatus(p);if(target.status==='active')tickStatus(target);
+ advanceLocalTurnWorld(LOCAL_TURN_WORLD_TICKS,target.id);evaluatePhase();
+}
+/* v17.10 — 관절기 반응 방향 보정 + v17.9 입력 잠금 누수 방지 + v17.8 개인 사기 시계 UI 유지 */
+function skillArcValueAt(a,target,cell){
+ const arc=attackArcFromPoint(cell.x,cell.y,target);
+ return arc.key==="rear"?30:arc.key==="side"?17:0;
+}
+function gridThreatCountAt(a,cell){
+ const foes=gridMembers(a.side==="our"?"enemy":"our");
+ return foes.filter(e=>{
+   const ec=gridCellOfActor(e);return ec&&Math.max(Math.abs(ec.c-cell.c),Math.abs(ec.r-cell.r))<=1;
+ }).length;
+}
+function gridGingaCandidates(a,target){
+ if(!zoom?.gridBattle||!a||!target||!gridAdjacent(a,target))return [];
+ const from=gridCellOfActor(a),tc=gridCellOfActor(target);if(!from||!tc)return [];
+ const cur=attackArc(a,target);const curScore=cur.key==="rear"?30:cur.key==="side"?17:0;
+ const smart=C((eff(a,"meo")-35)/55,0,1);
+ return gridNeighborCells(a,false).filter(cell=>{
+   return Math.max(Math.abs(cell.c-tc.c),Math.abs(cell.r-tc.r))===1;
+ }).map(cell=>{
+   const arc=attackArcFromPoint(cell.x,cell.y,target);
+   const arcScore=arc.key==="rear"?30:arc.key==="side"?17:0;
+   const threat=gridThreatCountAt(a,cell);
+   const moveCost=Math.max(Math.abs(cell.c-from.c),Math.abs(cell.r-from.r));
+   // 플레이어에게는 모든 합법 후보를 보여주고, NPC만 이 score를 사용한다.
+   const score=arcScore-threat*(1.2+smart*3.8)-moveCost*.2+stableTacticalNoise(a,`ginga:${cell.c}:${cell.r}`,1.2)*(1-smart*.6);
+   return {cell,score,arcScore,arc,threat};
+ }).filter(x=>x.arcScore>curScore).sort((x,y)=>y.score-x.score);
+}
+function gridGingaDestination(a,target){return gridGingaCandidates(a,target)[0]?.cell||null}
+function gridForcedRelocateLegal(a,c,r){
+ const g=zoom?.gridBattle,from=gridCellOfActor(a);if(!g||!from||!gridValidCell(g,c,r))return false;
+ if(gridActorAt(c,r,a.id))return false;
+ const dc=c-from.c,dr=r-from.r;
+ if(Math.max(Math.abs(dc),Math.abs(dr))!==1)return false;
+ if(dc!==0&&dr!==0){
+   if(!gridValidCell(g,from.c+dc,from.r)||!gridValidCell(g,from.c,from.r+dr))return false;
+ }
+ return true;
+}
+function gridForceRelocate(a,c,r,faceTarget=null){
+ if(!gridForcedRelocateLegal(a,c,r))return false;
+ const g=zoom.gridBattle;
+ g.actorCell[String(a.id)]={c,r,enteredAt:g.actorCell[String(a.id)]?.enteredAt??S.elapsed};
+ syncGridActorWorld(a);
+ if(faceTarget)faceTowardActor(a,faceTarget);
+ return true;
+}
+function gridShoveContext(att,def){
+ const g=zoom?.gridBattle,ac=gridCellOfActor(att),dc=gridCellOfActor(def);
+ if(!g||!ac||!dc)return {kind:"invalid"};
+
+ const vx=Math.sign(dc.c-ac.c),vy=Math.sign(dc.r-ac.r);
+ const c=dc.c+vx,r=dc.r+vy;
+
+ if(!gridValidCell(g,c,r))return {kind:"obstacle",c,r,label:"벽·경계"};
+
+ if(vx!==0&&vy!==0){
+   const side1=gridValidCell(g,dc.c+vx,dc.r);
+   const side2=gridValidCell(g,dc.c,dc.r+vy);
+   if(!side1||!side2)return {kind:"obstacle",c,r,label:"장애물"};
+ }
+
+ const cell=gridCell(g,c,r);
+ const blocker=gridActorAt(c,r,def.id);
+ if(!blocker)return {kind:"open",c,r,cell};
+
+ if(blocker.side===def.side)return {kind:"enemy_body",c,r,cell,blocker};
+ return {kind:"friendly_body",c,r,cell,blocker};
+}
+function gridShoveDestination(att,def){
+ const ctx=gridShoveContext(att,def);
+ return ctx.kind==="open"?ctx.cell:null;
+}
+function shoveCollisionRaw(att,def,bodyCollision=false){
+ const force=6+eff(att,"juk")*.035+eff(att,"mat")*.045;
+ const resist=eff(def,"mat")*.025;
+ const bodyMul=bodyCollision?.92:1.08;
+ return C((force-resist+RI(0,3))*bodyMul,5,15);
+}
+function applyShoveCollisionDamage(att,def,raw){
+ if(!att||!def||def.status!=="active"||raw<=0)return 0;
+
+ const dmg=C(applyIncomingDamage(def,raw),0,28);
+ def.hp=C(def.hp-dmg,0,def.maxHp);
+ def.damageTaken+=dmg;
+ att.damageDealt+=dmg;
+ diagHit(att,def,dmg);
+ maybeTempStatus(att,def,dmg,"brawl");
+
+ if(def.hp<=0){
+   def.status="out";
+   att.outs++;
+   S.sources[def.side].street++;
+   S.morale[def.side]=C(S.morale[def.side]-4,0,100);
+   feed(`${def.name} 전투이탈.`,def.side==="enemy"?"good":"bad");
+   diagKo();
+   if(zoom?.gridBattle)gridRemoveActor(def);
+ }
+ return dmg;
+}
+function performShove(att,def,opts={}){
+ if(!att||!def||!gridAdjacent(att,def)||def.status!=="active"){
+   return {ok:false,reason:"인접한 상대가 필요하다."};
+ }
+
+ const old=gridCellOfActor(def),ctx=gridShoveContext(att,def);
+ if(!old||ctx.kind==="invalid")return {ok:false,reason:"밀어붙일 방향을 잡을 수 없다."};
+
+ if(ctx.kind==="open"){
+   const moved=gridForceRelocate(def,ctx.c,ctx.r,att);
+   if(!moved)return {ok:false,reason:"밀어낼 수 없다."};
+   gridCaptureVacatedCell(att,old);
+   def.mom=C((def.mom??50)-5,0,momCap(def));
+   return {ok:true,pushed:true,damage:0,collision:"none",dest:ctx.cell};
+ }
+
+ if(ctx.kind==="friendly_body"){
+   return {ok:true,pushed:false,damage:0,collision:"friendly",blocker:ctx.blocker};
+ }
+
+ if(ctx.kind==="obstacle"){
+   const damage=applyShoveCollisionDamage(att,def,shoveCollisionRaw(att,def,false));
+   if(def.status!=="active"&&old)gridCaptureVacatedCell(att,old);
+   return {ok:true,pushed:false,damage,collision:"obstacle",label:ctx.label||"장애물"};
+ }
+
+ if(ctx.kind==="enemy_body"){
+   const blocker=ctx.blocker;
+   const primary=applyShoveCollisionDamage(att,def,shoveCollisionRaw(att,def,true));
+   const secondary=applyShoveCollisionDamage(att,blocker,shoveCollisionRaw(att,blocker,true)*.78);
+   if(def.status!=="active"&&old)gridCaptureVacatedCell(att,old);
+   return {
+     ok:true,pushed:false,damage:primary,secondaryDamage:secondary,
+     collision:"enemy_body",blocker
+   };
+ }
+
+ return {ok:false,reason:"밀어붙이기 판정을 완료하지 못했다."};
+}
+
+function gridThrowLandingCell(att,def){
+ const ac=gridCellOfActor(att);if(!ac)return null;
+ const allies=gridMembers(att.side).filter(a=>a.id!==att.id);
+ const candidates=[];
+ for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+   if(!dc&&!dr)continue;
+   const c=ac.c+dc,r=ac.r+dr;if(!gridForcedRelocateLegal(def,c,r))continue;
+   const cell=gridCell(zoom.gridBattle,c,r);if(!cell)continue;
+   const allyAdj=allies.filter(a=>{const x=gridCellOfActor(a);return x&&Math.max(Math.abs(x.c-c),Math.abs(x.r-r))<=1}).length;
+   const edge=gridCellIsBoundary(c,r)?1:0;
+   candidates.push({cell,score:allyAdj*5+edge*2+stableTacticalNoise(att,`throw:${c}:${r}`,1)});
+ }
+ candidates.sort((a,b)=>b.score-a.score);
+ return candidates[0]?.cell||null;
+}
+function throwSuccessChance(att,def){
+ const atk=eff(att,"mat")*.40+eff(att,"juk")*.25+eff(att,"meo")*.20+eff(att,"nal")*.15;
+ const res=eff(def,"mat")*.42+eff(def,"nal")*.38+eff(def,"meo")*.20;
+ return C(.61+(atk-res)*.0045,.32,.90);
+}
+function performThrow(att,def,opts={}){
+ if(!att||!def||!gridAdjacent(att,def)||def.status!=="active")return {ok:false,reason:"인접한 상대가 필요하다."};
+ const dest=gridThrowLandingCell(att,def);
+ if(!dest)return {ok:false,reason:"넘겨놓을 빈칸이 없다."};
+ const success=Math.random()<throwSuccessChance(att,def);
+ if(!success)return {ok:true,success:false};
+ const raw=C(6+(eff(att,"mat")-eff(def,"mat"))*.05+eff(att,"juk")*.03+RI(2,5),5,14);
+ const damage=applyDirectMeleeDamage(att,def,raw,"brawl");
+ if(def.status!=="active"){
+   if(zoom?.gridBattle)gridRemoveActor(def);
+   return {ok:true,success:true,damage,ko:true};
+ }
+ gridForceRelocate(def,dest.c,dest.r,att);
+ def.downs=(def.downs||0)+1;
+ def.stunned=Math.max(def.stunned||0,1);
+ def.mom=C((def.mom??50)-13,0,momCap(def));
+ if(Math.random()<.38)addStatus(def,"그로기");
+ log(`${def.name}이 잡아넘겨져 다운됐다.`,def.side==="our"?"bad":"good");
+ return {ok:true,success:true,damage,dest};
+}
+function gingaStrikeRaw(att,def){
+ // 징가의 핵심 보상은 측·후방 각을 잡는 것. 자체 순수 화력은 일반 타격 수준에 둔다.
+ return C(5+eff(att,"juk")*.044+eff(att,"nal")*.018-eff(def,"mat")*.022+RI(1,4),5,16);
+}
+function pinGridActorToCell(a,cell){
+ if(!a||!cell||!zoom?.gridBattle||a.status!=="active")return false;
+ zoom.gridBattle.actorCell[String(a.id)]={c:cell.c,r:cell.r,enteredAt:zoom.gridBattle.actorCell[String(a.id)]?.enteredAt??S.elapsed};
+ syncGridActorWorld(a);
+ return true;
+}
+function executeGinga(att,target,dest=null){
+ const choice=dest||gridGingaDestination(att,target);if(!choice)return {ok:false,reason:"더 좋은 측면·후방 빈칸이 없다."};
+ const before=gridCellOfActor(att);
+ if(!gridMoveActor(att,choice.c,choice.r))return {ok:false,reason:"이동할 수 없다."};
+ faceTowardActor(att,target);
+ const arc=attackArc(att,target);
+ let damage=0,meta=null,ko=false;
+ if(target.status==="active"){
+   damage=applyDirectMeleeDamage(att,target,gingaStrikeRaw(att,target),"brawl");
+   meta=att.lastStrikeMeta||null;ko=target.status!=="active";
+   // KO/다운 공통 코어가 공격자를 상대 옛자리로 당기더라도 징가는 선택한 이동 지점에 남는다.
+   pinGridActorToCell(att,choice);
+   if(ko&&zoom?.gridBattle)gridRemoveActor(target);
+ }
+ return {ok:true,before,dest:choice,arc,threat:gridThreatCountAt(att,choice),damage,meta,ko};
+}
+
+/* 태권도 뒷차기: 직선 2칸, 인접 명중 때만 1칸 넉백. */
+function gridBackKickVector(att,def){
+ const ac=gridCellOfActor(att),dc=gridCellOfActor(def);if(!ac||!dc)return null;
+ const dx=dc.c-ac.c,dy=dc.r-ac.r;
+ if(dx!==0&&dy!==0)return null;
+ const d=Math.max(Math.abs(dx),Math.abs(dy));
+ if(d<1||d>2)return null;
+ return {dx,dy,d,vx:Math.sign(dx),vy:Math.sign(dy)};
+}
+function gridBackKickTargetable(att,def){return !!gridBackKickVector(att,def)&&def?.status==="active"}
+function backKickRaw(att,def){
+ return C(7+eff(att,"juk")*.055+eff(att,"nal")*.030-eff(def,"mat")*.028+RI(1,5),7,20);
+}
+function performBackKick(att,def){
+ const vec=gridBackKickVector(att,def);if(!vec)return {ok:false,reason:"가로·세로 직선 2칸 안의 상대가 필요하다."};
+ const origin=gridCellOfActor(att);
+ const damage=applyDirectMeleeDamage(att,def,backKickRaw(att,def),"brawl");
+ if(def.status!=="active"){
+   if(zoom?.gridBattle)gridRemoveActor(def);
+   // 뒷차기는 밀어붙이기와 달리 절대 상대의 옛 칸을 차지하지 않는다.
+   pinGridActorToCell(att,origin);
+   return {ok:true,damage,ko:true,pushed:false,range:vec.d};
+ }
+ let pushed=false;
+ if(vec.d===1){
+   const dc=gridCellOfActor(def);const c=dc.c+vec.vx,r=dc.r+vec.vy;
+   if(gridValidCell(zoom.gridBattle,c,r)&&!gridActorAt(c,r,def.id))pushed=gridForceRelocate(def,c,r,att);
+ }
+ // 넉백 성공 여부와 관계없이 공격자는 원래 칸 고정.
+ pinGridActorToCell(att,origin);
+ return {ok:true,damage,pushed,range:vec.d};
+}
+
+/* 무에타이 엘보: 제자리 초근접 타격 + 시야 흐림/그로기 특화. */
+function elbowRaw(att,def){return C(6+eff(att,"juk")*.050+eff(att,"nal")*.014-eff(def,"mat")*.025+RI(2,5),6,18)}
+function performElbow(att,def){
+ if(!att||!def||!gridAdjacent(att,def))return {ok:false,reason:"인접한 상대가 필요하다."};
+ const damage=applyDirectMeleeDamage(att,def,elbowRaw(att,def),"brawl");
+ let status=null;
+ if(def.status==="active"){
+   const p=C(.34+Math.max(0,damage-8)*.020,.34,.66);
+   if(Math.random()<p){status=Math.random()<.52?"시야 흐림":"그로기";addStatus(def,status)}
+ }
+ return {ok:true,damage,status};
+}
+
+/* 합기도 관절기: 패싸움 전체 2회. 사용 즉시 횟수 소모, 한 국지 행동창 동안 반응. */
+function jointLockSuccessData(defender,attacker){
+ const ctl=eff(defender,"meo")*.42+eff(defender,"nal")*.30+eff(defender,"mat")*.18+eff(defender,"juk")*.10;
+ const resist=eff(attacker,"nal")*.36+eff(attacker,"mat")*.34+eff(attacker,"meo")*.20+eff(attacker,"juk")*.10;
+ // 방어자가 바라보는 방향에서 들어오는 공격일수록 관절기를 걸기 쉽다.
+ // attackArc(attacker, defender)의 angle은 정면 0 → 후방 PI이므로 연속 보정한다.
+ const arc=attackArc(attacker,defender);
+ const frontness=C(1-(arc.angle/Math.PI),0,1); // 정면 1 / 후방 0
+ const directionBonus=-.22+frontness*.40;      // 정면 +18%p / 측면 약 -2%p / 후방 -22%p
+ const base=.60+(ctl-resist)*.004;
+ const chance=C(base+directionBonus,.20,.92);
+ return {chance,arc:arc.key,arcLabel:arc.label,angle:arc.angle,directionBonus};
+}
+function jointLockSuccessChance(defender,attacker){return jointLockSuccessData(defender,attacker).chance}
+function activateJointLock(a){
+ if(!a||skillUsesLeft(a,"jointlock")<=0)return {ok:false,reason:"관절기 사용 횟수를 모두 썼다."};
+ if(!consumeLimitedSkillUse(a,"jointlock"))return {ok:false,reason:"관절기 사용 횟수를 모두 썼다."};
+ a.jointLockReady=1;
+ a.jointLockOutcome={state:"armed",at:S.elapsed};
+ return {ok:true,left:skillUsesLeft(a,"jointlock")};
+}
+function tryJointLockReaction(defender,attacker){
+ if(!defender?.jointLockReady||!attacker||attacker.status!=="active"||!gridAdjacent(defender,attacker))return {triggered:false};
+ defender.jointLockReady=0;
+ const jl=jointLockSuccessData(defender,attacker);
+ const success=Math.random()<jl.chance;
+ const chancePct=Math.round(jl.chance*100);
+ if(!success){
+   defender.jointLockOutcome={state:"failed",attackerId:attacker.id,attackerName:attacker.name,arc:jl.arc,arcLabel:jl.arcLabel,chancePct,at:S.elapsed};
+   log(`${defender.name}의 관절기 시도 — ${jl.arcLabel} 공격 대응 ${chancePct}% · ${attacker.name}이 빠져나갔다.`,defender.side==="our"?"bad":"good");
+   return {triggered:true,success:false,arc:jl.arc,chance:jl.chance};
+ }
+ attacker.injuryFlags=Array.isArray(attacker.injuryFlags)?attacker.injuryFlags:[];
+ attacker.injuryFlags.push("관절");
+ attacker.mom=C((attacker.mom??50)-20,0,momCap(attacker));
+ const ac=gridCellOfActor(attacker);
+ const nearby=gridMembers(attacker.side).filter(e=>e.id!==attacker.id).filter(e=>{
+   const ec=gridCellOfActor(e);return ac&&ec&&Math.max(Math.abs(ec.c-ac.c),Math.abs(ec.r-ac.r))<=2;
+ });
+ nearby.forEach(e=>e.mom=C((e.mom??50)-14,0,momCap(e)));
+ S.morale[attacker.side]=C(S.morale[attacker.side]-3,0,100);
+ defender.jointLockOutcome={state:"success",attackerId:attacker.id,attackerName:attacker.name,nearby:nearby.length,arc:jl.arc,arcLabel:jl.arcLabel,chancePct,at:S.elapsed};
+ log(`${defender.name}의 관절기 — ${jl.arcLabel} 공격 대응 ${chancePct}% · ${attacker.name}의 관절에 큰 충격. 주변 ${nearby.length}명의 기세도 흔들렸다.`,defender.side==="our"?"good":"bad");
+ return {triggered:true,success:true,nearby:nearby.length,arc:jl.arc,chance:jl.chance};
+}
+
+/* 극진 기합: 2칸 이내 적의 방향/타깃 우선순위를 자신에게 돌리고 1턴 불퇴. */
+function gridEnemiesWithin(a,range){
+ const ac=gridCellOfActor(a);if(!ac)return [];
+ return gridMembers(a.side==="our"?"enemy":"our").filter(e=>{
+   const ec=gridCellOfActor(e);return ec&&Math.max(Math.abs(ec.c-ac.c),Math.abs(ec.r-ac.r))<=range;
+ });
+}
+function performKiai(a){
+ const foes=gridEnemiesWithin(a,2);if(!foes.length)return {ok:false,reason:"기합이 닿을 적이 없다."};
+ for(const e of foes){
+   e.forcedTargetId=a.id;e.forcedTargetTurns=1;faceTowardActor(e,a);
+ }
+ a.kiaiGuardTurns=1;
+ return {ok:true,count:foes.length};
+}
+
+function npcSkillRoll(a,id,target){
+ return C(.5+stableTacticalNoise(a,`skill:${id}:${target?.id||'none'}:${Math.floor(S.elapsed/3)}`,.5),0,1);
+}
+function gridNpcChooseSpaceSkill(a,target){
+ if(!a||!target)return null;
+ const adjacent=gridAdjacent(a,target);
+ const smart=C((eff(a,"meo")-35)/55,0,1),ps=a.personality||{aggression:55,caution:50};
+ if(hasSkill(a,"kiai")&&canPayCombatSkill(a,"kiai")&&adjacent&&gridEnemiesWithin(a,2).length>=2){
+   if(npcSkillRoll(a,"kiai",target)>.76-smart*.08)return "kiai";
+ }
+ if(hasSkill(a,"jointlock")&&canPayCombatSkill(a,"jointlock")&&adjacent&&skillUsesLeft(a,"jointlock")>0){
+   const pressure=gridAdjacentEnemies(a).length;
+   if((pressure>=2||a.hp/a.maxHp<.55)&&npcSkillRoll(a,"jointlock",target)>.74-smart*.08)return "jointlock";
+ }
+ if(hasSkill(a,"backkick")&&canPayCombatSkill(a,"backkick")&&gridBackKickTargetable(a,target)){
+   if(npcSkillRoll(a,"backkick",target)>.72-smart*.08)return "backkick";
+ }
+ if(!adjacent)return null;
+ if(hasSkill(a,"elbow")&&canPayCombatSkill(a,"elbow")){
+   const already=statusObj(target,"시야 흐림")||statusObj(target,"그로기");
+   if(!already&&npcSkillRoll(a,"elbow",target)>.70-smart*.08)return "elbow";
+ }
+ if(hasSkill(a,"throw")&&gridThrowLandingCell(a,target)&&canPayCombatSkill(a,"throw")){
+   const alliedPressure=gridMembers(a.side).filter(x=>x.id!==a.id&&gridAdjacent(x,target)).length;
+   if((alliedPressure>=1||target.hp/target.maxHp<.58)&&npcSkillRoll(a,"throw",target)>.72-smart*.10)return "throw";
+ }
+ if(hasSkill(a,"shove")&&canPayCombatSkill(a,"shove")){
+   const shoveCtx=gridShoveContext(a,target);
+   const useful=shoveCtx.kind==="open"||shoveCtx.kind==="obstacle"||shoveCtx.kind==="enemy_body";
+   const collisionBonus=shoveCtx.kind==="enemy_body"?.13:shoveCtx.kind==="obstacle"?.08:0;
+   if(useful&&ps.aggression>=55&&npcSkillRoll(a,"shove",target)>.74-smart*.08-collisionBonus)return "shove";
+ }
+ if(hasSkill(a,"ginga")&&gridGingaDestination(a,target)&&canPayCombatSkill(a,"ginga")){
+   const arc=attackArc(a,target);
+   if(arc.key!=="rear"&&npcSkillRoll(a,"ginga",target)>.68-smart*.14)return "ginga";
+ }
+ return null;
+}
+function executeNpcSpaceSkill(a,target,id){
+ const paid=payCombatSkill(a,id);if(paid===false)return {ok:false,id};
+ if(id==="jointlock"){
+   const r=activateJointLock(a);return {...r,id,cost:paid,control:false,stance:true};
+ }
+ if(id==="kiai")return {...performKiai(a),id,cost:paid,control:false,stance:true};
+ if(id==="ginga")return {...executeGinga(a,target),id,cost:paid,control:false};
+ if(id==="shove")return {...performShove(a,target,{npc:true}),id,cost:paid,control:true};
+ if(id==="throw")return {...performThrow(a,target,{npc:true}),id,cost:paid,control:true};
+ if(id==="backkick")return {...performBackKick(a,target),id,cost:paid,control:false};
+ if(id==="elbow")return {...performElbow(a,target),id,cost:paid,control:false};
+ return {ok:false,id};
+}
+
+function playerSpaceSkill(act){
+ if(!zoom?.gridBattle)return {handled:false};
+ const p=player(),target=currentBrawlTarget();
+ if(!p)return {handled:true,ok:false,reason:"플레이어가 없다."};
+ if(!hasSkill(p,act))return {handled:true,ok:false,reason:"보유하지 않은 기술이다."};
+ if(skillUsesLeft(p,act)<=0)return {handled:true,ok:false,reason:`${COMBAT_SKILLS[act]?.label||act} 사용 횟수를 모두 썼다.`};
+ const cost=combatSkillCost(p,act);
+ if(p.sp<cost)return {handled:true,ok:false,reason:`SP가 부족하다. 필요 ${cost} / 현재 ${Math.round(p.sp)}.`};
+
+ // 징가는 버튼을 누른 순간 턴을 소비하지 않고 목적지 선택 모드로 들어간다.
+ if(act==="ginga"){
+   if(!target)return {handled:true,ok:false,reason:"직접 상대를 먼저 선택해야 한다."};
+   if(!gridAdjacent(p,target))return {handled:true,ok:false,reason:"인접한 상대가 필요하다."};
+   const candidates=gridGingaCandidates(p,target);
+   if(!candidates.length)return {handled:true,ok:false,reason:"측면·후방으로 돌아설 빈칸이 없다."};
+   setGingaMode(!zoom.gingaMode);
+   return {handled:true,ok:true,pending:true,target};
+ }
+
+ if(act==="jointlock"){
+   if(zoom?.reactionResolving)return {handled:true,ok:false,reason:"관절기 반응을 처리하는 중이다."};
+   if(!gridAdjacentEnemies(p).length)return {handled:true,ok:false,reason:"관절기를 걸어올 근접 적이 없다."};
+   payCombatSkill(p,act);const result=activateJointLock(p);
+   if(!result.ok)return {handled:true,ok:false,reason:result.reason||"관절기 준비 실패."};
+   zoom.totalTurns++;
+   // v17.9: 관절기 반응창은 잠깐 입력을 잠그되, 어떤 종료 경로에서도 반드시 해제한다.
+   // 이전 버전은 반응 계산/국면 갱신 중 예외나 조기 종료가 나면 reactionResolving이 남아
+   // 이후 이동·공격 버튼이 계속 비활성화될 수 있었다.
+   const reactionZoom=zoom;
+   const reactionActorId=p.id;
+   const reactionToken=(reactionZoom.reactionToken||0)+1;
+   reactionZoom.reactionToken=reactionToken;
+   reactionZoom.reactionResolving=true;
+   feed(`관절기 준비 — 자세를 잡고 근접 공격을 기다린다. 남은 횟수 ${result.left}. SP -${cost}.`,'gold');
+   renderZoom();
+
+   setTimeout(()=>{
+     let live=null;
+     try{
+       if(zoom!==reactionZoom||reactionZoom.finished||S.ended)return;
+       live=S.actors.find(a=>a.id===reactionActorId)||player();
+       if(!live||live.status!=="active")return;
+
+       advanceLocalTurnWorld(LOCAL_TURN_WORLD_TICKS,null);
+       // 월드 진행 중 난전 화면 자체가 닫힌 경우 결과 UI를 더 건드리지 않는다.
+       if(zoom!==reactionZoom||reactionZoom.finished||S.ended)return;
+
+       live=S.actors.find(a=>a.id===reactionActorId)||live;
+       const outcome=live.jointLockOutcome||{state:"armed"};
+       if(outcome.state==="success")feed(`관절기 발동! — ${outcome.arcLabel||"정면"} 대응 ${outcome.chancePct??"?"}% · ${outcome.attackerName||"공격자"} 관절 부상 · 주변 ${outcome.nearby||0}명 기세 저하.`,'gold');
+       else if(outcome.state==="failed")feed(`관절기 실패 — ${outcome.arcLabel||"측면"} 대응 ${outcome.chancePct??"?"}% · ${outcome.attackerName||"공격자"}을(를) 놓쳤다.`,'bad');
+       else feed(`관절기 불발 — 이번 차례에는 나를 향한 근접 공격이 들어오지 않았다.`);
+
+       tickStatus(live);
+       evaluatePhase();
+     }catch(err){
+       console.error(err);
+       if(zoom===reactionZoom&&!reactionZoom.finished&&!S.ended){
+         feed(`관절기 반응 처리 중 오류가 발생해 자세를 해제했다.`,'bad');
+       }
+     }finally{
+       if(live){live.jointLockReady=0;live.jointLockOutcome=null;}
+       reactionZoom.reactionResolving=false;
+       if(reactionZoom.reactionToken===reactionToken)reactionZoom.reactionToken=0;
+       if(zoom===reactionZoom&&!reactionZoom.finished&&!S.ended)renderZoom();
+     }
+   },650);
+
+   // 안전장치: 브라우저/국면 전환 예외로 위 콜백이 정상 마무리되지 않아도 입력 잠금을 남기지 않는다.
+   setTimeout(()=>{
+     if(zoom!==reactionZoom||reactionZoom.finished||S.ended)return;
+     if(reactionZoom.reactionResolving&&reactionZoom.reactionToken===reactionToken){
+       const live=S.actors.find(a=>a.id===reactionActorId);
+       if(live){live.jointLockReady=0;live.jointLockOutcome=null;}
+       reactionZoom.reactionResolving=false;
+       reactionZoom.reactionToken=0;
+       feed(`관절기 반응창 종료 — 다음 행동이 가능하다.`,'gold');
+       renderZoom();
+     }
+   },1800);
+   return {handled:true,ok:true,pending:true,result};
+ }
+ if(act==="kiai"){
+   payCombatSkill(p,act);const result=performKiai(p);
+   if(!result.ok){p.sp=C(p.sp+cost,0,p.maxSp);return {handled:true,ok:false,reason:result.reason}}
+   zoom.totalTurns++;
+   feed(`기합 — 주변 적 ${result.count}명의 시선과 공격 우선순위를 끌었다. 1턴 불퇴. SP -${cost}.`,'gold');
+   advanceLocalTurnWorld(LOCAL_TURN_WORLD_TICKS,null);
+   p.kiaiGuardTurns=0;tickStatus(p);evaluatePhase();
+   return {handled:true,ok:true,result};
+ }
+
+ if(!target)return {handled:true,ok:false,reason:"직접 상대를 먼저 선택해야 한다."};
+ const needsAdjacent=!(["backkick"].includes(act));
+ if(needsAdjacent&&!gridAdjacent(p,target))return {handled:true,ok:false,reason:"인접한 상대에게만 사용할 수 있다."};
+ if(act==="backkick"&&!gridBackKickTargetable(p,target))return {handled:true,ok:false,reason:"가로·세로 직선 2칸 안의 상대가 필요하다."};
+ if(act==="throw"&&!gridThrowLandingCell(p,target))return {handled:true,ok:false,reason:"잡아넘길 빈칸이 없다."};
+
+ payCombatSkill(p,act);zoom.totalTurns++;
+ let result;
+ if(act==="shove")result=performShove(p,target,{player:true});
+ else if(act==="throw")result=performThrow(p,target,{player:true});
+ else if(act==="backkick")result=performBackKick(p,target);
+ else if(act==="elbow")result=performElbow(p,target);
+ if(!result?.ok)return {handled:true,ok:false,reason:result?.reason||"기술이 실패했다.",spent:true,target};
+
+ if(act==="shove"){
+   if(result.pushed){
+     feed(`밀어붙이기 — ${target.name}을 한 칸 밀어내며 전진했다. 피해 없음.`,'gold');
+   }else if(result.collision==="obstacle"){
+     feed(`밀어붙이기 — ${target.name}이 ${result.label||"장애물"}에 충돌 · 피해 ${Math.round(result.damage||0)}.`,'gold');
+   }else if(result.collision==="enemy_body"){
+     feed(`밀어붙이기 — ${target.name}이 ${result.blocker?.name||"뒤의 적"}과 충돌 · ${target.name} -${Math.round(result.damage||0)} / ${result.blocker?.name||"뒤의 적"} -${Math.round(result.secondaryDamage||0)}.`,'gold');
+   }else if(result.collision==="friendly"){
+     feed(`밀어붙이기 — 뒤에 아군 ${result.blocker?.name||""}이 있어 밀어내지 못했다.`,'bad');
+   }
+ }
+ if(act==="throw")feed(result.success?`잡아넘기기 — ${target.name}에게 ${Math.round(result.damage||0)} 피해 · 다운/스턴.`:`잡아넘기기 실패 — ${target.name}이 중심을 버텼다.` ,result.success?'gold':'bad');
+ if(act==="backkick")feed(`뒷차기 — ${target.name} 피해 ${Math.round(result.damage||0)}${result.pushed?' · 1칸 넉백':''}${result.range===2?' · 2칸 타격':''}. SP -${cost}.`,'gold');
+ if(act==="elbow")feed(`엘보 — ${target.name} 피해 ${Math.round(result.damage||0)}${result.status?` · ${result.status}`:''}. 제자리 유지 · SP -${cost}.`,'gold');
+
+ tickStatus(p);if(target.status==='active')tickStatus(target);
+ advanceLocalTurnWorld(LOCAL_TURN_WORLD_TICKS,target.id);
+ evaluatePhase();
+ return {handled:true,ok:true,result,target};
+}
+
+/* 프로토타입 브라우저 회귀검사 전용. 본게임 이식 금지. */
+if(typeof window!=="undefined")window.__NANGMAN_SKILL_TEST__={
+ fixture(kind="ginga"){
+   const g=zoom?.gridBattle,p=player(),e=gridMembers("enemy")[0];
+   if(!g||!p||!e)return {ok:false,reason:"난전 진입 필요"};
+   let pc=null,ec=null;
+   const step=kind==="backkick"?2:1;
+   for(let r=1;r<g.rows-1&&!pc;r++)for(let c=1;c<g.cols-1-step&&!pc;c++){
+     if(!gridValidCell(g,c,r)||!gridValidCell(g,c+step,r))continue;
+     if(kind==="ginga"&&(!gridValidCell(g,c,r-1)||!gridValidCell(g,c+1,r-1)||!gridValidCell(g,c,r+1)||!gridValidCell(g,c+1,r+1)))continue;
+     pc={c,r};ec={c:c+step,r};
+   }
+   if(!pc)return {ok:false,reason:"fixture cell 없음"};
+   g.actorCell={};
+   g.actorCell[String(p.id)]={...pc,enteredAt:S.elapsed};
+   g.actorCell[String(e.id)]={...ec,enteredAt:S.elapsed};
+   syncAllGridActorsWorld();faceTowardActor(p,e);faceTowardActor(e,p);zoom.targetId=e.id;
+   renderZoom();
+   return {ok:true,kind,player:pc,enemy:ec,gingaCandidates:gridGingaCandidates(p,e).map(x=>({c:x.cell.c,r:x.cell.r,arc:x.arc.key,threat:x.threat})),backkick:gridBackKickTargetable(p,e)};
+ },
+ snapshot(){
+   const p=player(),t=currentBrawlTarget();
+   return {
+     playerCell:p?gridCellOfActor(p):null,targetCell:t?gridCellOfActor(t):null,
+     playerHp:p?.hp??null,playerSp:p?.sp??null,targetHp:t?.hp??null,targetSp:t?.sp??null,
+     targetStatus:t?.status??null,targetInjuries:[...(t?.injuryFlags||[])],
+     jointLockReady:p?.jointLockReady||0,usesLeft:p?skillUsesLeft(p,"jointlock"):null
+   };
+ },
+ setTargetHp(v){const t=currentBrawlTarget();if(!t)return false;t.hp=C(Number(v)||1,1,t.maxHp);renderZoom();return true;}
+};
 function nearestDirectThreat(p,enemies){
  const sorted=[...enemies].sort((a,b)=>dist2(p,a)-dist2(p,b));
  const threat=sorted[0]||null;
@@ -3454,11 +6084,21 @@ function resolveDirectDuelAction(att,def,attAct,defAct){
 }
 function brawlAction(act){
  if(!zoom||zoom.finished)return;
+ if(zoom.reactionResolving){
+   feed("관절기 반응을 기다리는 중이다.","gold");
+   return;
+ }
  if(act==="move"){
-   setMoveMode(!zoom.moveMode);
+   cancelGingaMode();setMoveMode(!zoom.moveMode);
    return;
  }
  cancelMoveMode();
+ if(act!=="ginga")cancelGingaMode();
+ if(["ginga","shove","throw","backkick","jointlock","elbow","kiai"].includes(act)){
+   const sr=playerSpaceSkill(act);
+   if(sr?.handled&&!sr.ok){feed(sr.reason||"기술을 사용할 수 없다.","bad");renderZoom()}
+   return;
+ }
 
  const p=player();
  if(!p||p.status!=="active")return closeBrawlView("내가 전투이탈했다.");
@@ -3609,14 +6249,16 @@ function closeBrawlView(reason="난전 국면 종료"){
  zoom.moveMode=false;
  zoom.finished=true;
  const elapsed=Math.max(0,S.elapsed-zoom.startedAt);
- log(`난전 확대 종료 — ${reason} (직접 조작 ${zoom.totalTurns}턴 / 전체시간 ${elapsed}초 경과)`,"gold","summary");
+ log(`난전 개입 종료 — ${reason}`,"gold","summary");
  S.playerAuto=true;
  $("zoomveil").hidden=true;
  zoom=null;
  render();
 }
 function feed(msg,cls=""){
- const d=document.createElement("div");d.className=cls;d.textContent=msg;$("brawlFeed").prepend(d);
+ const el=$("brawlFeed");if(!el)return;
+ const d=document.createElement("div");d.className=cls;d.textContent=msg;el.prepend(d);
+ while(el.children.length>28)el.removeChild(el.lastChild);
 }
 function finishBattle(){
  if(S.ended)return;
@@ -3651,7 +6293,11 @@ function render(){
  $("enemyMorale").textContent="사기 "+Math.round(S.morale.enemy);
  const adv=C(S.advantage+(active("our").length-active("enemy").length)*2,-45,45);
  $("marker").style.left=(50+adv)+"%";
- $("flowText").textContent=adv>=25?"크게 우세":adv>=10?"우세":adv<=-25?"크게 열세":adv<=-10?"열세":"팽팽";
+ $("flowText").textContent=
+   adv>=25?"우세를 굳히는 중":
+   adv>=10?"조금씩 밀어붙이는 중":
+   adv<=-25?"전선이 크게 밀리는 중":
+   adv<=-10?"조금씩 밀리는 중":"팽팽한 힘겨루기";
  $("pauseBtn").classList.toggle("on",S.manualPause);
  $("speedBtn").textContent="테스트 속도 ×"+S.speed;
  const bf=$("battlefield");bf.innerHTML="";
@@ -3660,13 +6306,7 @@ function render(){
  for(const z of zonesBase){
    const d=zoneData(z),el=document.createElement("div");
    el.className="zone"+(z.id===player().zone?" me":"")+(Math.abs(d.diff)>=3?" hot":"");
-   let localTxt="";
-   if(z.id===player().zone){
-     const visualR=meleeBoundaryRadius();
-     const pc=clusterAt(z.id,player().x,player().y,visualR);
-     localTxt=` · 내 주변 ${pc.ours.length}:${pc.enemies.length}`;
-   }
-   el.innerHTML=`<div class="zonehead"><b>${z.name}${z.id===player().zone?" · 현재 위치":""}</b><span>${d.our} vs ${d.enemy}${localTxt}</span></div>
+   el.innerHTML=`<div class="zonehead"><b>${z.name}${z.id===player().zone?" · 현재 위치":""}</b><span>${d.our} vs ${d.enemy}</span></div>
    <div class="zbar"><i style="width:${d.pressure}%"></i></div><div class="field"></div>`;
    const field=el.querySelector(".field");
    const zs=zoneSpace(z.id);
@@ -3682,10 +6322,10 @@ function render(){
       // v14.4a: 전체 패싸움 바둑알은 '전면 폭'이 가로로 읽히도록 표시만 회전한다.
     // 논리 계산의 진실좌표는 그대로 두고, 전체 전황 시각화만 y→가로, x→세로로 매핑한다.
     dot.style.left=a.x+"%";dot.style.top=a.y+"%";
-      dot.style.setProperty("--face-angle",ensureFacing(a)+"rad");
-      dot.title=a.name+` · 바라봄 ${facingArrow(a)}`+(a.status!=="active"?" · 전투이탈":a.transit?` · ${zonesBase.find(z=>z.id===a.transit.target)?.name} 이동 중`:"");
+      dot.title=a.name+(a.status!=="active"?" · 전투이탈":a.transit?` · ${zonesBase.find(z=>z.id===a.transit.target)?.name} 이동 중`:"");
       field.appendChild(dot);
    });
+   renderZoneMacroEvent(field,z.id);
    if(z.id===player().zone&&player().status==="active"){
       const ring=document.createElement("i");ring.className="cluster-ring";
       // 전체 바둑알과 동일하게 y→가로, x→세로 매핑.
@@ -3697,206 +6337,122 @@ function render(){
    }
    bf.appendChild(el);
  }
+ renderGlobalMacroEvent(bf);
  const summaryR=meleeBoundaryRadius();
  const pc=player().status==="active"?clusterAt(player().zone,player().x,player().y,summaryR):{ours:[],enemies:[]};
- const topology=S.mode==="single"?"단일 혼전 공간":`전선 ${zonesBase.length}개`;
- $("modeSummary").textContent=`${S.scenarioLabel} · 현재 ${S.modeLabel} · ${topology} · 잔존 ${active("our").length}:${active("enemy").length} · 내 주변 ${pc.ours.length}:${pc.enemies.length}`;
+ const modeSummary=$("modeSummary");
+ if(modeSummary)modeSummary.textContent=`${S.scenarioLabel} · ${active("our").length}:${active("enemy").length} · 주변 ${pc.ours.length}:${pc.enemies.length}`;
  renderEvent();
  renderPlayer();
  renderRoster();
  if(zoom)renderZoom();
- renderDiag();
- $("contract").textContent=
-`INPUT
-battle.start({ player, allies, enemies, rankTier, region, morale, elapsed, context })
-
-STATE
-프로토타입 내부 복사본만 수정
-본편 S / S.me / S.chars 직접 접근 금지
-
-OUTPUT
-{
- result,
- elapsed,
- player:{ hp, sp, status, statuses:[{name,turns}], downs, stunned, injuryFlags:[], damageTaken, damageDealt },
- actors:[{ battleId, hp, sp, status, statuses:[{name,turns}], downs, stunned, injuryFlags:[], damageTaken, damageDealt, outs, order, transit }],
- losses:{ our:{auto,street,collapse}, enemy:{auto,street,collapse} },
- morale:{our,enemy},
- injuryCandidates:[{battleId,candidates:[...]}],
- events:[...]
 }
 
-이식 시 원칙
-본편 → payload → 전투 모듈 → 결과 객체 → 본편 반영
-
-디버그 전용
-테스트 생존 보정: 플레이어 최대 HP/SP 상향 + 피격 감소. 본편 이식 금지.\n런타임 보호: 전투 루프 오류 발생 시 로그에 즉시 표시.
-
-현재 단계
-장악 → 간부 명령 → 실제 NPC별 잔류/이동 → 이동시간 → 전선 합류 구현
-
-난전 코어 원칙
-같은 실제 actor 객체를 사용 · 난전 진입 순간 전체전장의 고정 영역을 격자로 확대 · 국지전 종료 시 격자 위치를 월드 좌표로 유지
-
-상태 통합 원칙
-맞장과 난전이 동일한 TEMP_STATUS / statuses[] 스키마 사용
-그로기 · 다리가 풀림 · 시야 흐림 · 숨이 참 · 주먹이 저림 · 겁을 먹음
-
-이번 단계
-맞장 공용 downs / stunned / injuryFlags 흐름을 자동전투·난전에 연결
-전투 종료 때만 postInjury()로 후유증 후보 판정
-자동전투 저SP 시 숨 고르기 AI 추가
-UI의 HP/SP/누적피해는 정수 표시
-
-v12 공통 월드 코어
-- 전체 패싸움은 연속 월드 좌표, 난전 참가자는 고정 국지 격자가 위치를 관리하고 actor.x/y를 칸 중심에 동기화
-- 난전 화면은 NPC를 생성·고정·난입시키지 않고 플레이어 주변 실제 좌표를 실시간 조회\n- v12.2: 라이브 클러스터/국면 평가 함수 복구 및 빈 난전 오버레이 방어
-- v12.3: 같은 지역 전체를 자동전투 대상으로 잡던 오류 폐기
-- v12.4: 난전 직접 조작 중 현실시간 자동 진행 대신, 1턴 종료마다 전체 패싸움 3틱을 압축 진행
-- v12.5: 기본 로그는 국면/명령/전투이탈/전황 요약만 표시, 상세 로그는 토글로 분리
-- v12.6: 난전에서 현재 주변 적 카드로 직접 상대 선택, 선택 자체는 턴 미소모, 상대 이탈 시 가까운 적 자동 대체
-- v12.7: 실제 좌표 기반 수적 우세/열세, 측후방 압박, 포위, 고립을 기존 난전 계산에 보정치로 연결
-- v12.8: 모바일 우선 난전 카드보드. 8:8까지 한 화면에 보이도록 기본 카드 최소화, 실제 상대위치를 4x4(세로)/6x3(가로) 압축 배치, 상세 정보는 별도 bottom-sheet/패널로 분리
-- v12.9: 이동 버튼 후 보드의 빈 공간/아군/적 방향을 터치해 플레이어 실제 좌표 변경. 이동도 1턴=3틱 소비, 민첩/SP/다리 상태가 이동폭에 영향
-- v12.10: 이동 모드에서 8방향 이동 가능 지점과 최대 이동 범위를 보드에 표시. 직접 타격 거리를 별도 축소하고 사거리 밖 press/trade/counter 차단
-- v12.11: 실제 인물 좌표를 이동 장애물로 처리. 사람 점유 위치와 신체를 관통하는 경로는 이동 불가, 보드에는 실제로 갈 수 있는 빈 이동점만 표시
-- v12.12 자체점검: 선택만 한 타깃이 3틱 동안 정지하던 오류 제거. 직접 교환에 이미 참여한 NPC만 해당 턴 압축 계산에서 제외
-- 파고들기/정면승부/아군돕기의 내부 위치이동도 충돌 판정 적용, 사람 몸 안으로 겹치는 문제 방지
-- 버티기/도주 실패 시 선택한 먼 적에게 원거리 피격되던 오류 제거. 실제 가장 가까운 타격 가능 적만 피해 원인이 됨
-- NPC 자동 피해 교환 거리도 플레이어 직접 타격거리와 통일
-- 이동 방향이 완전히 막히지 않았다면 최대거리보다 짧은 실제 빈 지점까지 이동 가능
-- 실제 좌표는 비어 있어도 카드 그림과 이동점이 겹쳐 보이는 위치는 UI 선택지에서 숨겨 시각적 오해 방지
-- 패싸움 종료가 난전 중 발생해도 난전/상세 오버레이가 남지 않도록 종료 처리 보강
-- v13: 같은 전선 공간 이동을 actor 순차 좌표수정에서 2단계 동시 처리로 변경
-  ① 모든 NPC/플레이어 이동 의도 수집 → ② 민첩·지능·성격·명령 기반 우선도와 공간 예약으로 충돌 해결 → ③ 승인 좌표 동시 적용
-- 플레이어 이동도 즉시 순간이동하지 않고 첫 전체전장 tick에서 AI 이동과 함께 판정
-- 동일 목적지 경쟁, 교차 경로, 현재 점유, 두 인물의 동시 진입을 공통 resolver가 처리
-- 낮은 우선도 이동은 무조건 취소하지 않고 경로상 가능한 가장 가까운 지점까지 부분 이동
-- 사후 personalSpace 밀어내기 제거. 공격거리와 이동 정지거리 사이의 진동/공격불가 상태 완화
-- v14: 공간 AI를 단순 최근접 추격에서 전선/측면/빈 틈 평가로 확장. 지능이 높을수록 측면·후방·빈 통로·수적 우세를 더 정확히 선택
-- 지능 높은 인물은 측면에 도달한 뒤에만 반응하는 것이 아니라 적 대형 바깥의 빈 회랑을 미리 계산해 측면으로 이동을 시작
-- 같은 공간 동시 경쟁은 민첩이 우선순위의 핵심이 되도록 변경. 지능은 주로 '어디를 노릴지', 민첩은 '누가 먼저 차지할지'를 담당
-- 다운/KO가 발생하면 방어자가 자리를 내주고 공격자가 기존 상대 위치를 점유해 전선을 전진시키는 땅따먹기 규칙 추가
-- 난전 카드보드 카메라를 플레이어 중심에서 국지 전장 중심으로 변경. 플레이어가 후열/측면/전선 끝이면 실제 그 위치에 표시
-- 20:20 시작 시 플레이어도 5개 종축 중 하나에 배치되어 항상 중앙에서 시작하지 않음
-- v14.1: 20:20 초기 배치를 5종축×4열 고유 슬롯으로 변경해 시작 좌표 중복/끼임 제거
-- 전체 전황에서는 플레이어도 playerAuto=true일 때 NPC와 동일한 공간 AI로 이동. 난전 확대 중에만 직접 조작
-- 측면 AI에 '교전 거리 축소' 강제 조건을 추가해 측면만 돌다가 접촉하지 않는 정체 방지
-- 자동 피해교환 판정 주기를 3틱→2틱으로 조정하되 개별 NPC nextAutoAt 쿨다운은 유지
-- v14.3 진단판: v14.2 전투 로직/수치 변경 없이 이동·거리·접촉·교전·타격·다운/KO 계측만 추가\n- v14.2: 플레이어 수동 이동은 AI와 달리 현재 화면의 점유를 절대 기준으로 사용
-- 상대가 같은 tick에 이동하더라도 그 상대의 시작 위치를 목적지로 삼거나 현재 몸을 관통해 이동할 수 없음
-- UI 선택 시, 실행 직전, 동시 이동 resolver 세 단계에서 플레이어 이동을 중복 검증
-- 턴 종료 후 주변 실제 NPC 유입/이탈과 전체 전투이탈 변화를 요약 반영
-- 플레이어와 현재 직접 상대는 압축 자동전투에서 제외해 이중 계산 방지
-- 자동전투는 실제 접촉거리 안의 NPC끼리만 발생
-- 이동은 거리 비율 이동이 아니라 고정 속도 이동
-- 20:20 넓은 대로는 5개 종축으로 초기 분산하고 개인 간 최소 간격 적용
-- 한 상대에게 모두 몰리는 현상을 막기 위해 이미 붙은 인원 수를 타깃 점수에 패널티
-- 20:20 직접 난전 조회 반경 11
-- 난전/맞장 집중 중에도 전체 패싸움 타이머와 다른 NPC 행동은 계속 진행
-- 직접 난전 중 자동전투에서 제외되는 것은 플레이어와 현재 직접 상대뿐
-- 다른 NPC들은 성격·지능·현재 체력/스태미너·주변 수적 상황을 보고 계속 이동/교전
-- NPC 성격 기본축: 공격성 / 의리 / 규율 / 신중함\n- 성격+지능은 같은 전선 내 접근/지원/위험 회피/자동교전 타깃 점수에 이미 반영
-- 전선 간 이동은 기존 지휘 명령 시스템 유지
-- 난전 턴 제한은 '미션 제한'이 아니라 국면 제한으로 사용
-  일반 국면 7~10턴 / 실제 사수 명령 5~6턴
-- 국면 종료 시 참가자 교체율·규모 변화·교전 중심 이동을 공통 평가
-- 단일 대형 난전은 국면만 갱신, 정식 패싸움은 필요 시 전체 전황으로 줌아웃
-
-폐기
-- 난입 확률 / 턴당 난입 인원 / 난입 반경 기반 강제 참가
-- 구출·돌진 미션을 먼저 만들고 인원을 끼워 맞추는 사건 생성기
-- 난전 참가자 locked 복사/고정
-
-다음
-- 직접 타깃 선택 UI
-- 포위/측후방/수적 우세를 공통 전투 계산에 반영
-- 관계/직위/성격을 NPC 행동 점수에 더 세밀하게 연결
-- 맞장 화면도 동일 월드 지속 코어에 실제 연결`;
-}
 function renderEvent(){
- const e=$("eventArea"),p=player();
- const c=p?.status==="active"?localMeleeSnapshot(p,meleeBoundaryRadius()):{ours:[],enemies:[],pocket:null};
- const eligible=!S.event && p?.status==="active" && brawlPromptEligible(c);
- const mode=S.event?`event:${S.event.id}`:(eligible?"quick":"idle");
+ const btn=$("mapMeleeBtn"),p=player();
+ if(!btn||!p)return;
 
- // 실시간 render()가 80ms마다 돌아도 버튼 DOM 자체는 유지한다.
- // 같은 모드에서 innerHTML을 다시 쓰지 않고 숫자/설명 textContent만 갱신한다.
- if(e.dataset.mode!==mode){
-   e.dataset.mode=mode;
+ const c=p.status==="active"
+   ?localMeleeSnapshot(p,meleeBoundaryRadius())
+   :{ours:[],enemies:[]};
+
+ // 일반 난전 사건은 현장에서 멀어지면 자연스럽게 폐기.
+ if(S.event&&!S.event.forced&&!brawlPromptEligible(c)){
+   S.event=null;
+ }
+
+ const quickEligible=!S.event&&p.status==="active"&&brawlPromptEligible(c);
+ const canEnter=!!S.event||quickEligible;
+
+ btn.hidden=!canEnter;
+ btn.classList.toggle("forced",!!S.event?.forced);
+ btn.textContent=S.event?.forced?"직접 대응":"난전 개입";
+ btn.title=S.event
+   ?`${S.event.title} · 현재 주변 난전 직접 개입`
+   :"현재 주변 난전 직접 개입";
+
+ btn.onclick=()=>{
    if(S.event){
-     const ev=S.event;
-     e.innerHTML=`<div class="eventbox ${ev.forced?"forced":""}">
-       <strong id="eventTitle">${ev.forced?"[명령] ":""}${ev.title}</strong>
-       <div class="sub" id="eventDynamic"></div>
-       <div class="eventactions">
-         <button id="joinEvent">${ev.forced?"직접 버틴다":"주변 난전을 직접 본다"}</button>
-         ${ev.forced?"":`<button id="ignoreEvent">자동전투에 맡긴다</button>`}
-       </div>
-     </div>`;
-     $("joinEvent").onclick=enterBrawl;
-     const ig=$("ignoreEvent");if(ig)ig.onclick=ignoreEvent;
-   }else if(eligible){
-     e.innerHTML=`<div class="eventbox">
-       <strong>현재 주변 난전 진입 가능</strong>
-       <div class="sub" id="eventDynamic"></div>
-       <div class="eventactions">
-         <button id="quickJoinCurrentMelee">현재 주변 난전을 직접 본다</button>
-       </div>
-     </div>`;
-     $("quickJoinCurrentMelee").onclick=()=>{
-       if(openCurrentLocalMelee("현재 주변 난전"))enterBrawl();
-     };
-   }else{
-     e.innerHTML=`<div class="eventbox">
-       <strong>${S.modeLabel} 진행 중</strong>
-       <div class="sub" id="eventDynamic"></div>
-     </div>`;
+     enterBrawl();
+     return;
    }
+   if(openCurrentLocalMelee("현재 주변 난전"))enterBrawl();
+ };
+}
+function actorVisibleStateLabels(p){
+ if(!p||p.status!=="active")return ["전투이탈"];
+ const labels=[];
+ if((p.stunned||0)>0)labels.push("스턴");
+ for(const s of (p.statuses||[])){
+   const name=typeof s==="string"?s:(s.name||s.id||"상태 이상");
+   if(!labels.includes(name))labels.push(name);
  }
-
- const dyn=$("eventDynamic");
- if(!dyn)return;
- if(S.event){
-   const ev=S.event;
-   dyn.innerHTML=`발생 당시 ${ev.snapshotOur}:${ev.snapshotEnemy} · 현재 ${c.ours.length}:${c.enemies.length}<br>
-   ${ev.forced?"명령 응답 전까지만 전체 전장 정지.":"실제 교전 포켓을 확대합니다. 난전 1턴마다 전체 패싸움도 정해진 tick만큼 진행됩니다."}`;
- }else if(eligible){
-   dyn.innerHTML=`실제 교전 연결을 기준으로 현재 ${c.ours.length}:${c.enemies.length}.<br>
-   버튼 DOM은 실시간 렌더와 분리되어 전투 중에도 바로 진입할 수 있습니다.`;
- }else{
-   dyn.textContent=S.mode==="single"
-     ?`전체가 하나의 전투 공간이지만 실제로 맞붙은 교전 포켓은 따로 형성됩니다. 현재 연결 교전 ${c.ours.length}:${c.enemies.length}.`
-     :`여러 전선이 동시에 진행됩니다. 플레이어가 실제 교전 포켓 가까이에 오면 난전 확대가 가능합니다.`;
- }
+ if((p.injuryFlags||[]).length)labels.push("부상");
+ return labels.length?labels:["정상"];
 }
 function renderPlayer(){
- const p=player();
- $("playerCard").innerHTML=`<div class="person ${p.status!=="active"?"out":""}">
-  <b>${p.name} · ${p.status==="active"?"전투 중":"전투이탈"}</b>
-  <small>주먹 ${p.punch} · 민첩 ${p.agi} · 맷집 ${p.tough} · 지능 ${p.int}</small>
-  <div class="meters"><span>HP</span><span class="meter hp"><i style="width:${p.hp/p.maxHp*100}%"></i></span><b>${Math.round(p.hp)}</b></div>
-  <div class="meters"><span>SP</span><span class="meter sp"><i style="width:${p.sp/p.maxSp*100}%"></i></span><b>${Math.round(p.sp)}</b></div>
-  <small>피해 ${Math.round(p.damageDealt)} · 받은 피해 ${Math.round(p.damageTaken)} · 전투이탈 기여 ${p.outs}<br>
-  HP/SP와 맞장 공용 statuses[]는 전체 전장 복귀 후에도 그대로 유지됩니다.<br>자동전투에서도 플레이어가 같은 구역의 적과 실제로 교전합니다.</small>
-  <div class="statusline">${statusHtml(p)}${(p.stunned||p.downs||p.injuryFlags?.length)?`<span class="statuschip">${fullStatusText(p)}</span>`:""}</div>
- </div>`;
+ const p=player(),box=$("mapPlayerStatus");
+ if(!p||!box)return;
+
+ const labels=actorVisibleStateLabels(p);
+ const abnormal=labels[0]!=="정상";
+ const hpPct=C(p.hp/Math.max(1,p.maxHp)*100,0,100);
+ const spPct=C(p.sp/Math.max(1,p.maxSp)*100,0,100);
+
+ box.classList.toggle("abnormal",abnormal);
+ box.classList.toggle("out",p.status!=="active");
+ box.innerHTML=`
+   <div class="map-player-head">
+     <b>나</b>
+     <div class="map-player-states">
+       ${labels.map(x=>`<span>${x}</span>`).join("")}
+     </div>
+   </div>
+   <div class="map-player-resource hp">
+     <em>HP</em>
+     <i><u style="width:${hpPct}%"></u></i>
+     <strong>${Math.round(p.hp)}/${Math.round(p.maxHp)}</strong>
+   </div>
+   <div class="map-player-resource sp">
+     <em>SP</em>
+     <i><u style="width:${spPct}%"></u></i>
+     <strong>${Math.round(p.sp)}/${Math.round(p.maxSp)}</strong>
+   </div>`;
+
+ // 기존 프로토타입 id 계약은 유지하되 사용자 화면에서는 숨겨져 있다.
+ const legacy=$("playerCard");
+ if(legacy)legacy.textContent=fullStatusText(p);
 }
 function renderRoster(){
- const arr=S.actors.filter(a=>!a.isMe).sort((a,b)=>a.side.localeCompare(b.side)||a.status.localeCompare(b.status));
- $("roster").innerHTML=arr.slice(0,12).map(a=>{
-  const zn=zonesBase.find(z=>z.id===a.zone)?.name||a.zone;
-  const order=a.transit?`${zonesBase.find(z=>z.id===a.transit.target)?.name} 이동 중 ${a.transit.remaining}초`
-    :a.order?.type==="hold"?"잔류 명령":a.status==="active"?"전투 중":"전투이탈";
-  return `<div class="person ${a.status!=="active"?"out":""}">
-  <b>${a.side==="our"?"우리":"상대"} · ${a.name}</b>
-  <small>${zn} · ${order} · 성격 ${personalityName(a)} · HP ${Math.round(a.hp)}/${a.maxHp} · SP ${Math.round(a.sp)}/${a.maxSp} · 피해 ${Math.round(a.damageDealt)} / 받은 ${Math.round(a.damageTaken)} · 상태 ${fullStatusText(a)}</small>
- </div>`;
+ const arr=S.actors.filter(a=>!a.isMe)
+   .sort((a,b)=>a.side.localeCompare(b.side)||a.status.localeCompare(b.status)||a.name.localeCompare(b.name));
+
+ const ourCount=arr.filter(a=>a.side==="our"&&a.status==="active").length;
+ const enemyCount=arr.filter(a=>a.side==="enemy"&&a.status==="active").length;
+ const summary=$("rosterSummary");
+ if(summary)summary.textContent=`우리 ${ourCount} · 상대 ${enemyCount}`;
+
+ $("roster").innerHTML=arr.map(a=>{
+   const zn=zonesBase.find(z=>z.id===a.zone)?.name||a.zone;
+   const action=a.status!=="active"
+     ?"전투이탈"
+     :a.transit
+       ?`${zonesBase.find(z=>z.id===a.transit.target)?.name||"다른 전선"}으로 이동 중`
+       :a.order?.type==="hold"
+         ?"현재 위치 사수"
+         :"교전 중";
+   const visibleStates=actorVisibleStateLabels(a);
+   const state=visibleStates[0]==="정상"?"":visibleStates.join(" · ");
+   return `<div class="roster-person ${a.side} ${a.status!=="active"?"out":""}">
+     <b>${a.name}</b>
+     <small>${a.side==="our"?"우리":"상대"} · ${zn} · ${action}</small>
+     ${state?`<span>${state}</span>`:""}
+   </div>`;
  }).join("");
 }
 function selectBrawlTarget(id){
  if(!zoom)return;
- const target=currentBrawlCluster().enemies.find(a=>a.id===id&&a.status==="active");
+ const target=currentBrawlCluster().enemies.find(a=>String(a.id)===String(id)&&a.status==="active");
  if(!target)return;
  zoom.targetId=target.id;
  feed(`${target.name}을(를) 직접 상대 대상으로 정했다.`,"gold");
@@ -3908,14 +6464,20 @@ function currentBrawlTarget(){
 }
 function compactStatusTokens(a){
  const tokens=[];
- if((a.stunned||0)>0)tokens.push("스턴");
- if((a.downs||0)>0)tokens.push(`D${a.downs}`);
+ if(a.jointLockReady)tokens.push("관절대기");
+ if(hasSkill(a,"footwork"))tokens.push("풋");
+ if(hasSkill(a,"ginga"))tokens.push("징");
+ if(hasSkill(a,"shove"))tokens.push("밀");
+ if(hasSkill(a,"throw"))tokens.push("잡");
+ if(hasSkill(a,"backkick"))tokens.push("뒤");
+ if(hasSkill(a,"jointlock"))tokens.push("관");
+ if(hasSkill(a,"elbow"))tokens.push("엘");
+ if(hasSkill(a,"kiai"))tokens.push("합");
  const map={"그로기":"그","다리가 풀림":"다","시야 흐림":"시","숨이 참":"숨","주먹이 저림":"주","겁을 먹음":"겁"};
  for(const s of (a.statuses||[])){
    const name=typeof s==="string"?s:(s.name||s.id||"상");
    tokens.push(map[name]||name.slice(0,1));
  }
- if((a.injuryFlags||[]).length)tokens.push("부");
  const shown=tokens.slice(0,2);
  if(tokens.length>2)shown.push(`+${tokens.length-2}`);
  return shown;
@@ -3929,16 +6491,62 @@ function gridCellBoardPosition(c,r,g){
  return {x:(c+.5)/g.cols*100,y:(r+.5)/g.rows*100,c,r,key:gridCellKey(c,r)};
 }
 function applyGridBoardSizing(g,count){
- const board=$('tacticalBoard');if(!board)return {w:640,h:360,cardW:64,cardH:46};
- const w=board.clientWidth||board.parentElement?.clientWidth||640;
+ const board=$('tacticalBoard');if(!board)return {w:640,h:420,cardW:76,cardH:58};
  const mobile=window.innerWidth<=760;
+ const scroll=$('tacticalBoardScroll');
+
+ if(mobile){
+   /* v17.16: 가로 팬 구조를 유지하면서 세로 셀 높이와 상하 여백을 조금 늘린다.
+      셀 판독 크기를 먼저 보장하고, 초과 너비는 지도 전용 가로 스크롤로 본다. */
+   const viewportW=scroll?.clientWidth||board.parentElement?.clientWidth||Math.max(320,window.innerWidth-12);
+   const readableCellW=94;
+   const readableCellH=68;
+   const w=Math.max(viewportW, g.cols*readableCellW);
+   const h=C(g.rows*readableCellH,360,560);
+   board.style.width=Math.round(w)+'px';
+   board.style.minWidth=Math.round(w)+'px';
+   board.style.maxWidth='none';
+   board.style.height=Math.round(h)+'px';
+
+   const cellW=w/g.cols,cellH=h/g.rows;
+   const cardW=C(Math.floor(cellW)-6,78,96);
+   const cardH=C(Math.floor(cellH)-8,56,64);
+   board.style.setProperty('--mini-w',cardW+'px');
+   board.style.setProperty('--mini-h',cardH+'px');
+   board.style.setProperty('--grid-cols',g.cols);
+   board.style.setProperty('--grid-rows',g.rows);
+   board.classList.toggle('dense-cards',cardW<82||cardH<56);
+   return {w,h,cardW,cardH};
+ }
+
+ const w=board.clientWidth||board.parentElement?.clientWidth||640;
  const aspect=g.cols/Math.max(1,g.rows);
- const h=C(w/aspect,mobile?285:300,mobile?390:460);board.style.height=Math.round(h)+'px';
- const cardW=C(Math.floor(w/g.cols)-4,mobile?38:44,88);const cardH=C(Math.floor(h/g.rows)-4,mobile?38:42,52);
- board.style.setProperty('--mini-w',cardW+'px');board.style.setProperty('--mini-h',cardH+'px');
- board.style.setProperty('--grid-cols',g.cols);board.style.setProperty('--grid-rows',g.rows);
- board.classList.toggle('dense-cards',cardW<62||cardH<46);
+ const readableRow=61;
+ const naturalH=Math.max(w/aspect,g.rows*readableRow);
+ const h=C(naturalH,360,570);
+ board.style.width='';board.style.minWidth='';board.style.maxWidth='';
+ board.style.height=Math.round(h)+'px';
+ const cellW=w/g.cols,cellH=h/g.rows;
+ const cardW=C(Math.floor(cellW)+4,70,112);
+ const cardH=C(Math.floor(cellH)-3,57,70);
+ board.style.setProperty('--mini-w',cardW+'px');
+ board.style.setProperty('--mini-h',cardH+'px');
+ board.style.setProperty('--grid-cols',g.cols);
+ board.style.setProperty('--grid-rows',g.rows);
+ board.classList.toggle('dense-cards',cardW<66||cardH<55);
  return {w,h,cardW,cardH};
+}
+function primeTacticalBoardScroll(){
+ if(!zoom||zoom.boardScrollPrimed||window.innerWidth>760)return;
+ const scroll=$('tacticalBoardScroll'),cards=$('boardCards');
+ const me=cards?.querySelector('.mini-fighter.me');
+ if(!scroll||!me)return;
+ requestAnimationFrame(()=>{
+   const max=Math.max(0,scroll.scrollWidth-scroll.clientWidth);
+   const desired=me.offsetLeft-scroll.clientWidth*.5;
+   scroll.scrollLeft=C(desired,0,max);
+   zoom.boardScrollPrimed=true;
+ });
 }
 function renderGridBackdrop(g){
  const back=$('gridBackdrop');if(!back)return;back.innerHTML='';
@@ -3954,25 +6562,64 @@ function layoutBoardActors(actors,p){
  for(const a of actors){const cell=gridCellOfActor(a);if(!cell)continue;const pos=gridCellBoardPosition(cell.c,cell.r,g);result.set(a.id,pos);logical[a.id]={x:cell.c,y:cell.r}}
  zoom.logicalById=logical;zoom.boardGrid={logicalCols:g.cols,logicalRows:g.rows,displayCols:g.cols,displayRows:g.rows};result.transform=g;return result;
 }
+function injuryMarkerHtml(a){
+ const sev=injuryUiSeverity(a);if(!sev)return "";
+ const label=sev==="major"?"큰 부상 · 후유증 가능":"일시 부상";
+ return `<span class="injury-marker ${sev}" title="${injuryUiTitle(a)}" aria-label="${label}">✚</span>`;
+}
+function knockStateBadgesHtml(a){
+ const out=[];
+ if((a.downUiTurns||0)>0)out.push(`<span class="name-state down">다운</span>`);
+ if((a.stunned||0)>0)out.push(`<span class="name-state stun">스턴</span>`);
+ return out.join("");
+}
+/* v17.12 · 개인 사기 깃발 표시
+   공격 방향 화살표와 혼동되지 않도록 전투 사기를 상징하는 작은 깃발로 표시한다.
+   깃대의 기울기는 12시→5시 방향, 깃발 색은 초록→빨강으로 변한다. */
+function moraleArrowData(a){
+ const mom=C(Number(a?.mom??50),0,100);
+ let hour=12,angle=0,label="안정",level="high",color="#61d47b";
+ if(mom<10){hour=5;angle=150;label="붕괴 직전";level="critical";color="#ef4f4f";}
+ else if(mom<20){hour=4;angle=120;label="위축";level="very-low";color="#e56c4f";}
+ else if(mom<30){hour=3;angle=90;label="열세";level="low";color="#e09a4f";}
+ else if(mom<40){hour=2;angle=60;label="흔들림";level="mid";color="#d8c85a";}
+ else if(mom<50){hour=1;angle=30;label="약간 흔들림";level="good";color="#9ed66b";}
+ return {mom,hour,angle,label,level,color};
+}
+function moraleMarkerHtml(a,large=false){
+ const d=moraleArrowData(a);
+ const title=`사기 ${d.label} · ${d.hour}시 방향 (기세 ${Math.round(d.mom)})`;
+ return `<span class="morale-flag ${d.level}${large?" large":""}" style="--morale-angle:${d.angle}deg;--morale-color:${d.color}" title="${title}" aria-label="${title}"><i class="morale-flag-pole"></i><i class="morale-flag-cloth"></i></span>`;
+}
 function miniFighterHtml(a,pos,p){
  const side=a.side==="our"?"our":"enemy";
  const selected=a.id===zoom?.targetId;
  const tokens=compactStatusTokens(a);
  const lastTarget=S.actors.find(x=>x.id===a.lastOpponent);
  const targetMark=selected?"◎":(lastTarget?"↔":"");
- return `<div class="mini-fighter ${side}${a.isMe?" me":""}${selected?" selected":""}"
+ const attrs=side==="enemy"
+   ?`type="button" data-target-id="${a.id}" aria-label="${a.name} 타깃 선택"`
+   :`type="button" data-detail-id="${a.id}" aria-label="${a.name} 상세 보기"`;
+
+ return `<button class="mini-fighter ${side}${a.isMe?" me":""}${selected?" selected":""}"
    style="left:${pos.x}%;top:${pos.y}%"
-   data-actor-id="${a.id}" ${side==="enemy"?`data-target-id="${a.id}"`:""}>
-   <div class="mini-name">
-     <strong>${a.name}</strong>
+   data-actor-id="${a.id}" ${attrs}>
+   <div class="mini-name"><strong title="${a.name}">${a.name}</strong>${injuryMarkerHtml(a)}${knockStateBadgesHtml(a)}</div>
+   <div class="mini-bars"><span>HP</span><span class="mini-bar hp"><i style="width:${C(a.hp/a.maxHp*100,0,100)}%"></i></span><span class="mini-value">${Math.round(a.hp)}</span></div>
+   <div class="mini-bars"><span>SP</span><span class="mini-bar sp"><i style="width:${C(a.sp/a.maxSp*100,0,100)}%"></i></span><span class="mini-value">${Math.round(a.sp)}</span></div>
+   <div class="mini-bottom">
      <span class="mini-facing" title="바라보는 방향">${facingArrow(a)}</span>
-     <span class="mini-mark">${a.isMe?"나":targetMark}</span>
-     <button class="mini-info-btn" data-detail-id="${a.id}" aria-label="${a.name} 상세">⋯</button>
+     ${moraleMarkerHtml(a)}
+     <span class="mini-mark faction-mark ${a.isMe?"me-mark":side}">
+       ${a.isMe?"나":side==="our"?"아":"적"}
+     </span>
+     ${!a.isMe&&targetMark?`<span class="mini-mark contact-mark">${targetMark}</span>`:""}
+     <span class="mini-status-wrap">
+       ${tokens.length?tokens.slice(0,2).map(t=>`<span class="mini-status">${t}</span>`).join(""):`<span class="mini-status neutral">정상</span>`}
+     </span>
+     ${selected?`<span class="mini-targeted">표적</span>`:""}
    </div>
-   <div class="mini-bars"><span>H</span><span class="mini-bar hp"><i style="width:${C(a.hp/a.maxHp*100,0,100)}%"></i></span><span class="mini-value">${Math.round(a.hp)}</span></div>
-   <div class="mini-bars"><span>S</span><span class="mini-bar sp"><i style="width:${C(a.sp/a.maxSp*100,0,100)}%"></i></span><span class="mini-value">${Math.round(a.sp)}</span></div>
-   <div class="mini-bottom">${tokens.length?tokens.map(t=>`<span class="mini-status">${t}</span>`).join(""):`<span class="mini-status neutral">정상</span>`}${selected?`<span class="mini-targeted">TARGET</span>`:""}</div>
- </div>`;
+ </button>`;
 }
 function renderTacticalBoard(ours,enemies,p){
  const board=$("boardCards"),overflow=$("boardOverflow");
@@ -3981,11 +6628,10 @@ function renderTacticalBoard(ours,enemies,p){
  const pos=layoutBoardActors(actors,p);
  const tr=pos.transform;
  const meta=$("boardMeta");
- if(meta&&tr){
-   const g=zoom?.boardGrid;
-   meta.textContent=`${zoneGeometryLabel(p.zone)} · 난전 격자 ${g?.displayCols||'-'}×${g?.displayRows||'-'} · 칸 ${zoom.gridBattle.cellSize.toFixed(1)} · 고정 경계 R${zoom.gridBattle.radius.toFixed(1)}`;
- }
+ if(meta)meta.textContent=zonesBase.find(z=>z.id===p.zone)?.name||"";
  board.innerHTML=actors.map(a=>miniFighterHtml(a,pos.get(a.id)||{x:50,y:50},p)).join("");
+ primeTacticalBoardScroll();
+ renderLocalCombatFx(board,pos);
 
  const hidden=Math.max(0,ours.length+enemies.length-actors.length);
  if(overflow){
@@ -3995,48 +6641,87 @@ function renderTacticalBoard(ours,enemies,p){
 
  $("boardCount").textContent=`${ours.length} : ${enemies.length}`;
 
- board.querySelectorAll("[data-target-id]").forEach(el=>{
-   el.addEventListener("click",e=>{
-     if(e.target.closest("[data-detail-id]"))return;
-     if(zoom?.moveMode){
-       feed("이동 중에는 지도에 표시된 반투명 이동 카드를 선택하세요.","bad");
-       return;
-     }
-     selectBrawlTarget(el.dataset.targetId);
-   });
- });
- board.querySelectorAll(".mini-fighter.our").forEach(el=>{
-   el.addEventListener("click",e=>{
-     if(e.target.closest("[data-detail-id]"))return;
-     if(zoom?.moveMode){
-       feed("이동 중에는 지도에 표시된 반투명 이동 카드를 선택하세요.","bad");
-       return;
-     }
-     openActorDetail(el.dataset.actorId);
-   });
- });
- board.querySelectorAll("[data-detail-id]").forEach(btn=>{
-   btn.addEventListener("click",e=>{
-     e.stopPropagation();
-     openActorDetail(btn.dataset.detailId);
-   });
- });
+
 
  const tacticalBoard=$("tacticalBoard");
  if(tacticalBoard){
    tacticalBoard.classList.toggle('grid-melee',!!zoom?.gridBattle);
+
+   // v15.3b: 전장 컨테이너 하나가 모든 현재/미래 카드 입력을 위임받는다.
+   // 카드 DOM이 다시 그려져도 touch/click 계약은 유지된다.
    tacticalBoard.onclick=e=>{
-     if(!zoom?.moveMode)return;
-     if(e.target.closest(".move-ghost-card")||e.target.closest(".move-node")||e.target.closest(".mini-fighter")||e.target.closest("[data-detail-id]"))return;
-     feed("이동 모드에서는 지도에 표시된 반투명 이동 카드를 선택하세요.");
+     const detailBtn=e.target.closest("[data-detail-id]");
+     if(detailBtn){
+       e.preventDefault();e.stopPropagation();
+       openActorDetail(detailBtn.dataset.detailId);
+       return;
+     }
+
+     const gingaGhost=e.target.closest(".ginga-ghost-card");
+     if(gingaGhost){
+       e.preventDefault();e.stopPropagation();
+       const c=Number(gingaGhost.dataset.c),r=Number(gingaGhost.dataset.r);
+       if(Number.isFinite(c)&&Number.isFinite(r))consumePlayerGinga(c,r);
+       return;
+     }
+
+     const ghost=e.target.closest(".move-ghost-card");
+     if(ghost){
+       e.preventDefault();e.stopPropagation();
+       const c=Number(ghost.dataset.c),r=Number(ghost.dataset.r);
+       if(Number.isFinite(c)&&Number.isFinite(r))consumePlayerGridMove(c,r);
+       return;
+     }
+
+     const enemyCard=e.target.closest(".mini-fighter.enemy[data-target-id]");
+     if(enemyCard){
+       e.preventDefault();e.stopPropagation();
+       if(zoom?.moveMode){
+         feed("이동 중에는 반투명 이동 카드를 선택하세요.","bad");
+         return;
+       }
+       if(zoom?.gingaMode){
+         feed("징가 중에는 표시된 측면·후방 후보 칸을 선택하세요.","bad");
+         return;
+       }
+       selectBrawlTarget(enemyCard.dataset.targetId);
+       return;
+     }
+
+     const allyCard=e.target.closest(".mini-fighter.our[data-actor-id]");
+     if(allyCard){
+       e.preventDefault();e.stopPropagation();
+       if(zoom?.moveMode){
+         feed("이동 중에는 반투명 이동 카드를 선택하세요.","bad");
+         return;
+       }
+       if(zoom?.gingaMode){
+         feed("징가 중에는 표시된 측면·후방 후보 칸을 선택하세요.","bad");
+         return;
+       }
+       openActorDetail(allyCard.dataset.actorId);
+       return;
+     }
+
+     if(zoom?.moveMode){
+       feed("이동 모드에서는 지도에 표시된 반투명 이동 카드를 선택하세요.");
+     }else if(zoom?.gingaMode){
+       feed("징가에서는 지도에 표시된 측면·후방 후보 칸을 선택하세요.");
+     }
    };
    tacticalBoard.classList.toggle("move-mode",!!zoom?.moveMode);
+   tacticalBoard.classList.toggle("ginga-mode",!!zoom?.gingaMode);
  }
- const moveHint=$("moveHint");if(moveHint)moveHint.hidden=!zoom?.moveMode;
+ const moveHint=$("moveHint");if(moveHint){
+   moveHint.hidden=!(zoom?.moveMode||zoom?.gingaMode);
+   moveHint.textContent=zoom?.gingaMode?"징가 후보 칸 선택 · 이동 즉시 측면/후방 타격 + 위협도 표시":"지도에 표시된 반투명 이동 카드를 선택 · 실제 좌표로 동시 판정";
+ }
  document.querySelectorAll('[data-act="move"]').forEach(b=>b.classList.toggle("move-on",!!zoom?.moveMode));
+ document.querySelectorAll('[data-act="ginga"]').forEach(b=>b.classList.toggle("move-on",!!zoom?.gingaMode));
 
  const pp=pos.get(p.id);
  renderMoveDestinations(pp,pos,actors);
+ renderGingaDestinations();
  const tp=pos.get(zoom?.targetId);
  const line=$("targetLine");
  if(line){
@@ -4052,7 +6737,7 @@ function statCell(label,value){
  return `<div class="detail-stat"><small>${label}</small><b>${value??"-"}</b></div>`;
 }
 function openActorDetail(id){
- const a=S?.actors?.find(x=>x.id===id);if(!a)return;
+ const a=S?.actors?.find(x=>String(x.id)===String(id));if(!a)return;
  const side=a.side==="our"?"아군":"상대";
  const target=S.actors.find(x=>x.id===a.lastOpponent);
  $("detailSide").textContent=`${side} · ${personalityName(a)}`;
@@ -4066,7 +6751,9 @@ function openActorDetail(id){
    <div class="detail-cell"><small>상태</small><b>${statuses||"정상"}</b></div>
    <div class="detail-cell"><small>현재 교전</small><b>${target?.name||"없음"}</b></div>
    <div class="detail-cell"><small>성격</small><b>${personalityName(a)}</b></div>
+   <div class="detail-cell"><small>무술</small><b>${a.isMe?"프로토타입 전체 기술":martialLabel(a)}</b></div>
    <div class="detail-cell"><small>명령</small><b>${order}</b></div>
+   <div class="detail-cell detail-wide"><small>보유 기술</small><b>${skillSummary(a)}</b></div>
    <div class="detail-cell detail-wide"><small>전투 스탯</small>
     <div class="detail-statgrid">
       ${statCell("주먹",a.juk)}${statCell("민첩",a.nal)}${statCell("맷집",a.mat)}${statCell("지능",a.int)}
@@ -4092,24 +6779,32 @@ function renderZoom(){
  if(!target&&enemies.length){target=nearestTo(p,enemies);zoom.targetId=target?.id||null}
 
  $("zoomTitle").textContent=zoom.context==="hold"?"전선 사수 중":"주변 난전";
- $("zoomDesc").textContent=`${zonesBase.find(z=>z.id===p.zone)?.name||p.zone} · 진입 ${zoom.entrySnapshot.our}:${zoom.entrySnapshot.enemy} · 현재 ${ours.length}:${enemies.length} · 전체 타이머 ${fmt(S.elapsed)}`;
- $("pauseFlag").textContent=`턴 종료마다 전체전장 +${LOCAL_TURN_WORLD_TICKS}틱`;
+ const compactMobile=window.innerWidth<=760;
+ $("zoomDesc").textContent=compactMobile
+   ? `${zonesBase.find(z=>z.id===p.zone)?.name||p.zone} · ${ours.length}:${enemies.length} · ${fmt(S.elapsed)}`
+   : `${zonesBase.find(z=>z.id===p.zone)?.name||p.zone} · 진입 ${zoom.entrySnapshot.our}:${zoom.entrySnapshot.enemy} · 현재 ${ours.length}:${enemies.length} · 기술 ${skillSummary(p)} · 전체 타이머 ${fmt(S.elapsed)}`;
+ $("pauseFlag").textContent=compactMobile?"행동 시 전장 진행":"내가 행동하면 바깥 전장도 함께 진행";
  $("pauseFlag").className="pauseflag";
  $("zHp").textContent=Math.round(p.hp)+"/"+p.maxHp;
  $("zSp").textContent=Math.round(p.sp)+"/"+p.maxSp;
- $("zTurn").textContent=`국면 ${zoom.phaseNo} · ${Math.max(0,zoom.totalTurns-zoom.phase.startTurn)} / ${zoom.phase.limit}`;
- const mt=phaseChangeMetrics();
- $("missionBox").innerHTML=`<b>국면 ${zoom.phaseNo}</b><small>
- 시작 ${zoom.phase.startOur}:${zoom.phase.startEnemy} · 교체 ${Math.round(mt.turnover*100)}% · 규모변화 ${Math.round(mt.sizeChange*100)}% · 1턴=${LOCAL_TURN_WORLD_TICKS}틱<br>
- ${zoom.lastWorldSummary||"상대 카드=타깃 · 이동=보드 터치"}<br>
- ${flowWatchSummary()}
- </small>`;
+ $("zTurn").textContent="난전 진행 중";
+ const placeName=zonesBase.find(z=>z.id===p.zone)?.name||p.zone;
+ $("missionBox").innerHTML=`<b>${placeName}</b><small>현재 교전 ${ours.length}:${enemies.length} · 상대 카드 선택 후 행동</small>`;
  const tb=$("tacticalBoard");
  if(tb)tb.classList.toggle("flow-warn",zoom?.flowWatch?.status==="경고");
  renderTacticalBoard(ours,enemies,p);
 
  const selectedTarget=currentBrawlTarget();
  const targetAdjacent=selectedTarget?(zoom?.gridBattle?gridAdjacent(p,selectedTarget):Math.sqrt(dist2(p,selectedTarget))<=directAttackReach()):false;
+ // v17.10: 관절기 반응창에서 강제로 disabled 처리했던 일반 행동 버튼을
+ // 반응 종료 후 매 렌더마다 정상 상태로 복구한다. 이전에는 reactionResolving 값은
+ // false로 풀렸어도 버튼 DOM의 disabled/title이 그대로 남아 입력이 막혔다.
+ for(const id of ["endure","help","move","escape"]){
+   const b=document.querySelector(`[data-act="${id}"]`);
+   if(!b)continue;
+   b.disabled=false;
+   b.title="";
+ }
  const attackButtons=[
    ["press","press"],["trade","brawl"],["counter","counter"]
  ];
@@ -4117,11 +6812,39 @@ function renderZoom(){
    const b=document.querySelector(`[data-act="${uiAct}"]`);
    if(!b)continue;
    const cost=duelV87Cost(p,duelAct);
-   b.disabled=p.sp<cost||!targetAdjacent;
+   b.disabled=!!zoom?.reactionResolving||p.sp<cost||!targetAdjacent;
    b.title=!targetAdjacent?`인접한 적 필요`:`SP ${cost} 필요`;
    const small=b.querySelector("small");
    if(small)small.textContent=`${uiAct==="press"?"압박":uiAct==="trade"?"교환":"대응"} · SP ${cost}`;
  }
+ // 무술 난전 대표기: 보유 여부/현재 조건/SP/횟수를 실제 버튼 상태에 반영.
+ for(const id of ["ginga","shove","throw","backkick","jointlock","elbow","kiai"]){
+   const b=document.querySelector(`[data-act="${id}"]`);if(!b)continue;
+   b.hidden=!hasSkill(p,id);
+   const cost=combatSkillCost(p,id),left=skillUsesLeft(p,id);
+   let usable=p.sp>=cost&&left>0;let reason=`SP ${cost}`;
+   if(id==="ginga"){usable=usable&&!!selectedTarget&&targetAdjacent&&gridGingaCandidates(p,selectedTarget).length>0;reason=!selectedTarget?"직접 상대 선택 필요":!targetAdjacent?"인접한 상대 필요":!gridGingaCandidates(p,selectedTarget).length?"측후방 빈칸 필요":reason}
+   if(id==="shove"){usable=usable&&!!selectedTarget&&targetAdjacent;reason=!selectedTarget?"직접 상대 선택 필요":!targetAdjacent?"인접한 상대 필요":reason}
+   if(id==="throw"){usable=usable&&!!selectedTarget&&targetAdjacent&&!!gridThrowLandingCell(p,selectedTarget);reason=!selectedTarget?"직접 상대 선택 필요":!targetAdjacent?"인접한 상대 필요":!gridThrowLandingCell(p,selectedTarget)?"넘겨놓을 빈칸 필요":reason}
+   if(id==="backkick"){usable=usable&&!!selectedTarget&&gridBackKickTargetable(p,selectedTarget);reason=!selectedTarget?"직접 상대 선택 필요":!gridBackKickTargetable(p,selectedTarget)?"직선 2칸 안의 적 필요":reason}
+   if(id==="jointlock"){usable=usable&&gridAdjacentEnemies(p).length>0;reason=!gridAdjacentEnemies(p).length?"근접 적 필요":reason}
+   if(id==="elbow"){usable=usable&&!!selectedTarget&&targetAdjacent;reason=!selectedTarget?"직접 상대 선택 필요":!targetAdjacent?"인접한 상대 필요":reason}
+   if(id==="kiai"){usable=usable&&gridEnemiesWithin(p,2).length>0;reason=!gridEnemiesWithin(p,2).length?"2칸 안의 적 필요":reason}
+   if(p.sp<cost)reason=`SP ${cost} 필요`;if(left<=0)reason="사용 횟수 소진";
+   if(zoom?.reactionResolving){usable=false;reason="관절기 반응 대기 중";}
+   b.disabled=!usable;b.title=reason;
+   const sm=b.querySelector("small");
+   const label=id==="ginga"?"이동 + 즉시 타격":id==="shove"?"빈칸 이동 · 충돌":id==="throw"?"다운 · 스턴":id==="backkick"?"직선 2칸 · 근접 넉백":id==="jointlock"?`반응 부상 · ${Number.isFinite(left)?`남음 ${left}`:""}`:id==="elbow"?"제자리 · 시야/그로기":"광역 어그로 · 불퇴";
+   if(sm)sm.textContent=`${label} · SP ${cost}`;
+ }
+ if(zoom?.reactionResolving){
+   document.querySelectorAll('[data-act]').forEach(b=>{
+     b.disabled=true;
+     b.title="관절기 반응 대기 중";
+   });
+ }
+ const targetDetailBtn=$("targetDetailBtn");
+ if(targetDetailBtn)targetDetailBtn.hidden=!selectedTarget;
  if(selectedTarget){
    const tact=tacticalContext(p,selectedTarget);
    const targetDist=zoom?.gridBattle?gridDistance(p,selectedTarget):Math.sqrt(dist2(p,selectedTarget));
@@ -4139,11 +6862,30 @@ function renderZoom(){
 function fighterHtml(a,opts={}){
  const extraClass=`${opts.selectable?" selectable":""}${opts.selected?" selected":""}`;
  const dataAttr=opts.selectable?` data-target-id="${a.id}"`:"";
- return `<div class="fighter${extraClass}"${dataAttr}><b>${a.name}${a.isMe?" · 나":""}${a.status!=="active"?" · 이탈":""}</b>
+ return `<div class="fighter${extraClass}"${dataAttr}><div class="fighter-name-line"><b>${a.name}${a.isMe?" · 나":""}${a.status!=="active"?" · 이탈":""}</b>${injuryMarkerHtml(a)}${knockStateBadgesHtml(a)}${moraleMarkerHtml(a,true)}</div>
  <div class="meters"><span>HP</span><span class="meter hp"><i style="width:${a.hp/a.maxHp*100}%"></i></span><b>${Math.round(a.hp)}</b></div>
  <div class="meters"><span>SP</span><span class="meter sp"><i style="width:${a.sp/a.maxSp*100}%"></i></span><b>${Math.round(a.sp)}</b></div>
  <div class="statusline">${statusHtml(a)}${(a.stunned||a.downs||a.injuryFlags?.length)?`<span class="statuschip">${fullStatusText(a)}</span>`:""}</div></div>`;
 }
+
+
+function syncAppViewportHeight(){
+  const vv=window.visualViewport;
+  const h=Math.max(320,Math.round(vv?.height||window.innerHeight||document.documentElement.clientHeight||0));
+  const w=Math.max(280,Math.round(vv?.width||window.innerWidth||document.documentElement.clientWidth||0));
+  const root=document.documentElement;
+  root.style.setProperty("--app-vh",h+"px");
+  root.style.setProperty("--app-vw",w+"px");
+  const mobile=w<=760;
+  root.classList.toggle("vv-short",mobile&&h<760);
+  root.classList.toggle("vv-very-short",mobile&&h<690);
+}
+syncAppViewportHeight();
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize",syncAppViewportHeight,{passive:true});
+  window.visualViewport.addEventListener("scroll",syncAppViewportHeight,{passive:true});
+}
+window.addEventListener("orientationchange",()=>setTimeout(syncAppViewportHeight,80),{passive:true});
 
 $("scenarioSelect").onchange=init;
 $("startBtn").onclick=start;
@@ -4165,8 +6907,12 @@ $("resetBtn").onclick=init;
 $("confirmOrderBtn").onclick=confirmOrder;
 document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>brawlAction(b.dataset.act));
 $("detailCloseBtn").onclick=closeActorDetail;
+$("targetDetailBtn").onclick=()=>{
+ const t=currentBrawlTarget();
+ if(t)openActorDetail(t.id);
+};
 $("detailveil").onclick=e=>{if(e.target===$("detailveil"))closeActorDetail()};
-window.addEventListener("resize",()=>{if(zoom)renderZoom()});
+window.addEventListener("resize",()=>{syncAppViewportHeight();if(zoom)renderZoom()});
 init();
 })();
 </script>
